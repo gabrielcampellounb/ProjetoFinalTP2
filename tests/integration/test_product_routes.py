@@ -4,7 +4,9 @@ import unittest
 from app.web.app import create_app
 
 
-class TestProductRoutes(unittest.TestCase):
+class TestAD01ProductRoutes(unittest.TestCase):
+    """AD01: testa o cadastro de produtos pela API Flask."""
+
     def setUp(self):
         self.conn = sqlite3.connect(":memory:")
         self.app = create_app(self.conn)
@@ -13,7 +15,8 @@ class TestProductRoutes(unittest.TestCase):
     def tearDown(self):
         self.conn.close()
 
-    def test_create_product_route(self):
+    def test_ad01_create_product_route(self):
+        """AD01: produto válido deve retornar HTTP 201 e todos os campos."""
         response = self.client.post(
             "/products",
             json={
@@ -29,9 +32,13 @@ class TestProductRoutes(unittest.TestCase):
 
         data = response.get_json()
         self.assertEqual(data["name"], "Arroz")
+        self.assertEqual(data["brand"], "Tio João")
+        self.assertEqual(data["price"], 25.90)
         self.assertEqual(data["bar_code"], "1234567890123")
+        self.assertEqual(data["quantity"], 10)
 
-    def test_reject_duplicate_bar_code_route(self):
+    def test_ad01_reject_duplicate_bar_code_route(self):
+        """AD01: código de barras duplicado deve retornar HTTP 409."""
         payload = {
             "name": "Arroz",
             "brand": "Tio João",
@@ -49,7 +56,8 @@ class TestProductRoutes(unittest.TestCase):
             "Já existe um produto com o código de barras 1234567890123.",
         )
 
-    def test_reject_invalid_product_route(self):
+    def test_ad01_reject_invalid_product_route(self):
+        """AD01: dados inválidos devem retornar HTTP 400."""
         response = self.client.post(
             "/products",
             json={
@@ -67,7 +75,8 @@ class TestProductRoutes(unittest.TestCase):
             "O nome do produto não pode estar vazio.",
         )
 
-    def test_reject_missing_field_route(self):
+    def test_ad01_reject_missing_field_route(self):
+        """AD01: campo obrigatório ausente deve retornar HTTP 400."""
         response = self.client.post(
             "/products",
             json={
