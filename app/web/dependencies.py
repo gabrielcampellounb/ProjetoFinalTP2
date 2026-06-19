@@ -4,18 +4,18 @@ import sqlite3
 
 from app.application.admin_metrics_service import AdminMetricsService
 from app.application.cart_service import CartService
-from app.application.product_service import ProductService
 from app.application.product_price_service import ProductPriceService
+from app.application.product_service import ProductService
 from app.application.shopping_list_service import ShoppingListService
 from app.application.store_service import StoreService
 from app.application.user_service import UserService
-from app.infrastructure.product_repository import SQLiteProductRepository
 from app.infrastructure.admin_metrics_repository import (
     SQLiteAdminMetricsRepository,
 )
 from app.infrastructure.product_price_repository import (
     SQLiteProductPriceRepository,
 )
+from app.infrastructure.product_repository import SQLiteProductRepository
 from app.infrastructure.shopping_list_repository import (
     SQLiteShoppingListRepository,
 )

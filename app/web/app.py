@@ -23,21 +23,21 @@ from app.domain.exceptions import (
     ShoppingListNotFoundError,
     StoreNotFoundError,
 )
-from app.web.auth_routes import create_auth_blueprint
 from app.web.admin_metrics_routes import create_admin_metrics_blueprint
+from app.web.auth_routes import create_auth_blueprint
 from app.web.cart_routes import create_cart_blueprint
 from app.web.dependencies import (
     initialize_admin_metrics_service,
     initialize_cart_service,
-    initialize_product_service,
     initialize_product_price_service,
+    initialize_product_service,
     initialize_shopping_list_service,
     initialize_store_service,
     initialize_user_service,
 )
 from app.web.html_routes import create_html_blueprint
-from app.web.routes import create_product_blueprint
 from app.web.product_price_routes import create_product_price_blueprint
+from app.web.routes import create_product_blueprint
 from app.web.shopping_list_routes import create_shopping_list_blueprint
 from app.web.store_routes import create_store_blueprint
 

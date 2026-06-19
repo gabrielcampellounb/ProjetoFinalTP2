@@ -2,12 +2,26 @@ PYTHON ?= python3
 TEST_PATTERN ?= test_*.py
 TEST_ENV ?= PYTHONDONTWRITEBYTECODE=1
 
-.PHONY: test test-unit test-integration
+.PHONY: test test-unit test-integration coverage lint format quality
 
-test: test-unit test-integration
+test:
+	$(TEST_ENV) $(PYTHON) -m unittest discover -s tests
 
 test-unit:
 	$(TEST_ENV) $(PYTHON) -m unittest discover -s tests/unit -p "$(TEST_PATTERN)" -v
 
 test-integration:
 	$(TEST_ENV) $(PYTHON) -m unittest discover -s tests/integration -p "$(TEST_PATTERN)" -v
+
+coverage:
+	$(PYTHON) -m coverage erase
+	$(TEST_ENV) $(PYTHON) -m coverage run -m unittest discover -s tests
+	$(PYTHON) -m coverage report --fail-under=80
+
+lint:
+	$(PYTHON) -m ruff check .
+
+format:
+	$(PYTHON) -m ruff format .
+
+quality: test coverage lint
