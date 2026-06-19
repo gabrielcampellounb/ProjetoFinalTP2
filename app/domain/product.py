@@ -1,5 +1,7 @@
 """Entidades e regras de validação de produtos."""
 
+import math
+
 from app.domain.exceptions import InvalidProductError
 
 
@@ -17,8 +19,8 @@ class Product:
     ) -> None:
         """Cria um produto.
 
-        Pré: os argumentos devem atender às regras de cada atributo.
-        Pós: o produto é inicializado ou InvalidProductError é lançada.
+        Pré-condição: os argumentos devem atender às regras dos atributos.
+        Pós-condição: o produto é criado ou InvalidProductError é lançada.
         """
         self.name = name
         self.brand = brand
@@ -34,10 +36,15 @@ class Product:
     def name(self, value: str) -> None:
         """Atualiza o nome.
 
-        Pré: value deve ser uma string não vazia.
-        Pós: o nome é atualizado ou InvalidProductError é lançada.
+        Pré-condição: value deve ser uma string não vazia.
+        Pós-condição: o nome é atualizado ou InvalidProductError é lançada.
         """
-        self._validate_text(value, "name")
+        self._validate_text(
+            value=value,
+            field_label="nome",
+            article="O",
+            empty_adjective="vazio",
+        )
         self._name = value
 
     @property
@@ -49,10 +56,15 @@ class Product:
     def brand(self, value: str) -> None:
         """Atualiza a marca.
 
-        Pré: value deve ser uma string não vazia.
-        Pós: a marca é atualizada ou InvalidProductError é lançada.
+        Pré-condição: value deve ser uma string não vazia.
+        Pós-condição: a marca é atualizada ou InvalidProductError é lançada.
         """
-        self._validate_text(value, "brand")
+        self._validate_text(
+            value=value,
+            field_label="marca",
+            article="A",
+            empty_adjective="vazia",
+        )
         self._brand = value
 
     @property
@@ -64,13 +76,21 @@ class Product:
     def price(self, value: int | float) -> None:
         """Atualiza o preço.
 
-        Pré: value deve ser numérico e não negativo.
-        Pós: o preço é atualizado ou InvalidProductError é lançada.
+        Pré-condição: value deve ser numérico, finito e não negativo.
+        Pós-condição: o preço é atualizado ou InvalidProductError é lançada.
         """
         if isinstance(value, bool) or not isinstance(value, (int, float)):
-            raise InvalidProductError("Product price must be a number.")
+            raise InvalidProductError(
+                "O preço do produto deve ser um número."
+            )
+        if isinstance(value, float) and not math.isfinite(value):
+            raise InvalidProductError(
+                "O preço do produto deve ser finito."
+            )
         if value < 0:
-            raise InvalidProductError("Product price cannot be negative.")
+            raise InvalidProductError(
+                "O preço do produto não pode ser negativo."
+            )
         self._price = value
 
     @property
@@ -82,31 +102,41 @@ class Product:
     def bar_code(self, value: str) -> None:
         """Atualiza o código de barras.
 
-        Pré: value deve conter exatamente 13 dígitos ASCII.
-        Pós: o código é atualizado ou InvalidProductError é lançada.
+        Pré-condição: value deve conter exatamente 13 dígitos ASCII.
+        Pós-condição: o código é atualizado ou InvalidProductError é lançada.
         """
         if not isinstance(value, str):
-            raise InvalidProductError("Product bar code must be a string.")
+            raise InvalidProductError(
+                "O código de barras deve ser uma string."
+            )
         if (
             len(value) != self.BAR_CODE_LENGTH
             or not value.isascii()
             or not value.isdigit()
         ):
-            raise InvalidProductError("Product bar code must be a string of 13 digits.")
+            raise InvalidProductError(
+                "O código de barras deve conter exatamente 13 dígitos ASCII."
+            )
         self._bar_code = value
 
     @staticmethod
-    def _validate_text(value: str, field_name: str) -> None:
+    def _validate_text(
+        value: str,
+        field_label: str,
+        article: str,
+        empty_adjective: str,
+    ) -> None:
         """Valida um campo textual.
 
-        Pré: field_name identifica o campo recebido.
-        Pós: retorna sem efeito ou lança InvalidProductError.
+        Pré-condição: os argumentos devem descrever o campo recebido.
+        Pós-condição: retorna sem efeito ou lança InvalidProductError.
         """
         if not isinstance(value, str):
             raise InvalidProductError(
-                f"Product {field_name} must be a string."
+                f"{article} {field_label} do produto deve ser uma string."
             )
-        if not value:
+        if not value.strip():
             raise InvalidProductError(
-                f"Product {field_name} cannot be empty."
+                f"{article} {field_label} do produto não pode estar "
+                f"{empty_adjective}."
             )

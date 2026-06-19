@@ -5,6 +5,10 @@ class InvalidProductError(Exception):
     """Indica que um atributo viola uma pré-condição do produto."""
 
 
+class InvalidQuantityError(Exception):
+    """Indica que a quantidade informada é inválida."""
+
+
 class DuplicateBarcodeError(Exception):
     """Indica que o código de barras já está cadastrado."""
 

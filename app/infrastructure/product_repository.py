@@ -4,6 +4,7 @@ import sqlite3
 
 from app.domain.exceptions import DuplicateBarcodeError
 from app.domain.product import Product
+from app.domain.quantity import validate_quantity
 
 
 class SQLiteProductRepository:
@@ -12,16 +13,16 @@ class SQLiteProductRepository:
     def __init__(self, connection: sqlite3.Connection) -> None:
         """Inicializa o repositório.
 
-        Pré: connection deve ser uma conexão SQLite aberta.
-        Pós: o repositório passa a utilizar a conexão recebida.
+        Pré-condição: connection deve ser uma conexão SQLite aberta.
+        Pós-condição: o repositório passa a utilizar a conexão recebida.
         """
         self.connection = connection
 
     def create_table(self) -> None:
         """Cria a tabela de produtos quando necessário.
 
-        Pré: a conexão deve estar aberta.
-        Pós: a tabela existe e a transação é confirmada.
+        Pré-condição: a conexão deve estar aberta.
+        Pós-condição: a tabela existe e a transação é confirmada.
         """
         self.connection.execute(
             """
@@ -39,12 +40,15 @@ class SQLiteProductRepository:
     def add_product(self, product: Product, quantity: int) -> None:
         """Persiste um produto e sua quantidade.
 
-        Pré: produto válido, quantidade válida e código ainda não cadastrado.
-        Pós: o registro é salvo ou DuplicateBarcodeError é lançada.
+        Pré-condição: produto e quantidade válidos, com código ainda livre.
+        Pós-condição: o registro é salvo ou uma exceção é lançada.
         """
+        validate_quantity(quantity)
+
         if self.get_product_by_bar_code(product.bar_code) is not None:
             raise DuplicateBarcodeError(
-                f"Product with bar code {product.bar_code} already exists."
+                "Já existe um produto com o código de barras "
+                f"{product.bar_code}."
             )
 
         self.connection.execute(
@@ -68,8 +72,8 @@ class SQLiteProductRepository:
     ) -> tuple[Product, int] | None:
         """Busca um produto pelo código de barras.
 
-        Pré: bar_code deve identificar o registro procurado.
-        Pós: retorna produto e quantidade, ou None quando ausente.
+        Pré-condição: bar_code deve identificar o registro procurado.
+        Pós-condição: retorna produto e quantidade, ou None quando ausente.
         """
         row = self.connection.execute(
             """
