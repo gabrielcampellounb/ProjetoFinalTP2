@@ -12,18 +12,18 @@ from app.domain.shopping_list import ShoppingList, ShoppingListItem
 
 
 class ShoppingListService:
-    """US03: coordena a criação de listas de compras."""
+    """US03: coordena listas de compras e seus itens."""
 
     def __init__(
         self,
         shopping_list_repository,
-        product_repository=None,
         clock: Callable[[], datetime] | None = None,
+        product_repository=None,
     ) -> None:
-        """Inicializa o serviço de listas de compras.
+        """US03: inicializa o serviço de listas de compras.
 
-        Pré-condição: o repositório deve implementar inclusão de listas.
-        Pós-condição: o serviço fica pronto para criar listas.
+        Pré-condição: os repositórios devem implementar suas operações.
+        Pós-condição: o serviço fica pronto para gerenciar listas e itens.
         """
         self.shopping_list_repository = shopping_list_repository
         self.product_repository = product_repository
