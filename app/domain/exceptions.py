@@ -51,3 +51,11 @@ class CartItemNotFoundError(Exception):
 
 class InvalidStoreError(Exception):
     """Indica que um local de compra viola uma pré-condição."""
+
+
+class StoreNotFoundError(Exception):
+    """Indica que o local de compra solicitado não foi encontrado."""
+
+
+class InvalidProductPriceError(Exception):
+    """Indica que um preço observado viola uma pré-condição."""

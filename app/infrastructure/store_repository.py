@@ -72,3 +72,26 @@ class SQLiteStoreRepository:
             )
             for row in rows
         ]
+
+    def get_store_by_id(self, store_id: int) -> Store | None:
+        """US06: busca um local pelo identificador.
+
+        Pré-condição: store_id deve identificar o local procurado.
+        Pós-condição: retorna o local encontrado ou None.
+        """
+        row = self.connection.execute(
+            """
+            SELECT id, name, address, observation
+            FROM stores
+            WHERE id = ?;
+            """,
+            (store_id,),
+        ).fetchone()
+        if row is None:
+            return None
+        return Store(
+            store_id=row[0],
+            name=row[1],
+            address=row[2],
+            observation=row[3],
+        )

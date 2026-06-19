@@ -4,10 +4,14 @@ import sqlite3
 
 from app.application.cart_service import CartService
 from app.application.product_service import ProductService
+from app.application.product_price_service import ProductPriceService
 from app.application.shopping_list_service import ShoppingListService
 from app.application.store_service import StoreService
 from app.application.user_service import UserService
 from app.infrastructure.product_repository import SQLiteProductRepository
+from app.infrastructure.product_price_repository import (
+    SQLiteProductPriceRepository,
+)
 from app.infrastructure.shopping_list_repository import (
     SQLiteShoppingListRepository,
 )
@@ -81,3 +85,22 @@ def initialize_store_service(
     repository = SQLiteStoreRepository(connection)
     repository.create_table()
     return StoreService(repository)
+
+
+def initialize_product_price_service(
+    connection: sqlite3.Connection,
+    product_service: ProductService,
+    store_service: StoreService,
+) -> ProductPriceService:
+    """US06: inicializa as dependências do histórico de preços.
+
+    Pré-condição: conexão e serviços de produto e local estão configurados.
+    Pós-condição: retorna o serviço de preços com sua tabela criada.
+    """
+    price_repository = SQLiteProductPriceRepository(connection)
+    price_repository.create_table()
+    return ProductPriceService(
+        price_repository=price_repository,
+        product_repository=product_service.product_repository,
+        store_repository=store_service.store_repository,
+    )
