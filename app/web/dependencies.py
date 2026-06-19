@@ -2,6 +2,7 @@
 
 import sqlite3
 
+from app.application.admin_metrics_service import AdminMetricsService
 from app.application.cart_service import CartService
 from app.application.product_service import ProductService
 from app.application.product_price_service import ProductPriceService
@@ -9,6 +10,9 @@ from app.application.shopping_list_service import ShoppingListService
 from app.application.store_service import StoreService
 from app.application.user_service import UserService
 from app.infrastructure.product_repository import SQLiteProductRepository
+from app.infrastructure.admin_metrics_repository import (
+    SQLiteAdminMetricsRepository,
+)
 from app.infrastructure.product_price_repository import (
     SQLiteProductPriceRepository,
 )
@@ -17,6 +21,18 @@ from app.infrastructure.shopping_list_repository import (
 )
 from app.infrastructure.store_repository import SQLiteStoreRepository
 from app.infrastructure.user_repository import SQLiteUserRepository
+
+
+def initialize_admin_metrics_service(
+    connection: sqlite3.Connection,
+) -> AdminMetricsService:
+    """AD04: inicializa a consulta de métricas administrativas.
+
+    Pré-condição: as tabelas da aplicação devem estar inicializadas.
+    Pós-condição: retorna o serviço conectado ao SQLite recebido.
+    """
+    repository = SQLiteAdminMetricsRepository(connection)
+    return AdminMetricsService(repository)
 
 
 def initialize_product_service(

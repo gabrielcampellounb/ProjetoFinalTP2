@@ -24,8 +24,10 @@ from app.domain.exceptions import (
     StoreNotFoundError,
 )
 from app.web.auth_routes import create_auth_blueprint
+from app.web.admin_metrics_routes import create_admin_metrics_blueprint
 from app.web.cart_routes import create_cart_blueprint
 from app.web.dependencies import (
+    initialize_admin_metrics_service,
     initialize_cart_service,
     initialize_product_service,
     initialize_product_price_service,
@@ -40,7 +42,7 @@ from app.web.store_routes import create_store_blueprint
 
 
 def create_app(connection: sqlite3.Connection) -> Flask:
-    """AD01/US01-US06/AD02/AD03/RNF02: cria a aplicação Flask.
+    """AD01/AD02/AD03/AD04/US01-US06/RNF02: cria a aplicação Flask.
 
     Pré-condição: connection deve ser uma conexão SQLite aberta.
     Pós-condição: retorna a aplicação com autenticação e autorização.
@@ -60,6 +62,7 @@ def create_app(connection: sqlite3.Connection) -> Flask:
         product_service,
         store_service,
     )
+    admin_metrics_service = initialize_admin_metrics_service(connection)
 
     flask_app.register_blueprint(
         create_product_blueprint(product_service)
@@ -72,6 +75,9 @@ def create_app(connection: sqlite3.Connection) -> Flask:
     flask_app.register_blueprint(create_store_blueprint(store_service))
     flask_app.register_blueprint(
         create_product_price_blueprint(product_price_service)
+    )
+    flask_app.register_blueprint(
+        create_admin_metrics_blueprint(admin_metrics_service)
     )
     _register_error_handlers(flask_app)
 
