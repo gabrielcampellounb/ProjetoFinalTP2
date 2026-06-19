@@ -2,9 +2,13 @@
 
 from flask import Blueprint, jsonify, request
 
+from app.application.product_service import ProductService
 
-def create_product_blueprint(product_service) -> Blueprint:
-    """Cria as rotas de produtos com o serviço injetado.
+
+def create_product_blueprint(
+    product_service: ProductService,
+) -> Blueprint:
+    """AD01: cria a rota de cadastro com o serviço injetado.
 
     Pré-condição: product_service deve permitir a criação de produtos.
     Pós-condição: retorna uma blueprint com POST /products registrado.
@@ -13,7 +17,11 @@ def create_product_blueprint(product_service) -> Blueprint:
 
     @blueprint.post("/products")
     def create_product():
-        """Cria um produto a partir dos dados JSON recebidos."""
+        """AD01: cria um produto a partir dos dados JSON recebidos.
+
+        Pré-condição: a requisição deve conter os campos obrigatórios.
+        Pós-condição: retorna o produto criado em JSON com HTTP 201.
+        """
         data = request.get_json()
         product = product_service.create_product(
             name=data["name"],

@@ -16,10 +16,10 @@ from app.web.routes import create_product_blueprint
 
 
 def create_app(connection: sqlite3.Connection) -> Flask:
-    """Cria e configura a aplicação Flask.
+    """AD01: cria e configura a aplicação Flask para cadastro de produtos.
 
     Pré-condição: connection deve ser uma conexão SQLite aberta.
-    Pós-condição: retorna a aplicação com banco, serviço e rotas configurados.
+    Pós-condição: retorna a aplicação com a rota POST /products configurada.
     """
     flask_app = Flask(__name__)
 
@@ -36,7 +36,7 @@ def create_app(connection: sqlite3.Connection) -> Flask:
 
 
 def _register_error_handlers(flask_app: Flask) -> None:
-    """Registra respostas HTTP para erros esperados da aplicação."""
+    """AD01: registra respostas HTTP para erros do cadastro de produtos."""
 
     @flask_app.errorhandler(InvalidProductError)
     @flask_app.errorhandler(InvalidQuantityError)
@@ -49,7 +49,9 @@ def _register_error_handlers(flask_app: Flask) -> None:
 
     @flask_app.errorhandler(BadRequest)
     def handle_bad_request(error):
-        return jsonify({"erro": "O corpo da requisição deve conter JSON válido."}), 400
+        return jsonify(
+            {"erro": "O corpo da requisição deve conter JSON válido."}
+        ), 400
 
     @flask_app.errorhandler(KeyError)
     def handle_missing_field(error):
