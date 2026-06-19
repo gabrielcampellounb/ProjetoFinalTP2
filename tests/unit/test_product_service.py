@@ -1,7 +1,12 @@
 import unittest
 
 from app.application.product_service import ProductService
-from app.domain.exceptions import DuplicateBarcodeError, InvalidQuantityError
+from app.domain.exceptions import (
+    DuplicateBarcodeError,
+    InvalidProductError,
+    InvalidQuantityError,
+    ProductNotFoundError,
+)
 from app.domain.product import Product
 
 
@@ -21,6 +26,10 @@ class FakeProductRepository:
     def search_products_by_text(self, query):
         self.last_search_query = query
         return list(self.products.values())
+
+    def update_product(self, product):
+        _, quantity = self.products[product.bar_code]
+        self.products[product.bar_code] = (product, quantity)
 
 
 class TestProductService(unittest.TestCase):
@@ -134,3 +143,54 @@ class TestProductService(unittest.TestCase):
 
         self.assertEqual(results, [])
         self.assertIsNone(self.repository.last_search_query)
+
+    def test_ad02_update_existing_product(self):
+        """AD02: deve editar nome, marca e preço preservando identificação."""
+        updated_product, quantity = self.service.update_product(
+            bar_code=self.product.bar_code,
+            name="Produto atualizado",
+            brand="Marca atualizada",
+            price=25.90,
+        )
+
+        stored_product, stored_quantity = self.repository.products[
+            self.product.bar_code
+        ]
+        self.assertEqual(updated_product.name, "Produto atualizado")
+        self.assertEqual(updated_product.brand, "Marca atualizada")
+        self.assertEqual(updated_product.price, 25.90)
+        self.assertEqual(updated_product.bar_code, "1234567890111")
+        self.assertEqual(quantity, 5)
+        self.assertIs(stored_product, updated_product)
+        self.assertEqual(stored_quantity, 5)
+
+    def test_ad02_reject_update_for_missing_product(self):
+        """AD02: deve rejeitar edição de produto inexistente."""
+        with self.assertRaisesRegex(
+            ProductNotFoundError,
+            "^Produto com o código de barras 9999999999999 não encontrado\\.$",
+        ):
+            self.service.update_product(
+                bar_code="9999999999999",
+                name="Produto atualizado",
+                brand="Marca atualizada",
+                price=25.90,
+            )
+
+    def test_ad02_reject_invalid_update_without_changing_product(self):
+        """AD02: dados inválidos não devem alterar o produto armazenado."""
+        with self.assertRaises(InvalidProductError):
+            self.service.update_product(
+                bar_code=self.product.bar_code,
+                name="",
+                brand="Marca atualizada",
+                price=25.90,
+            )
+
+        stored_product, quantity = self.repository.products[
+            self.product.bar_code
+        ]
+        self.assertEqual(stored_product.name, "Produto de teste")
+        self.assertEqual(stored_product.brand, "Marca de teste")
+        self.assertEqual(stored_product.price, 10.0)
+        self.assertEqual(quantity, 5)

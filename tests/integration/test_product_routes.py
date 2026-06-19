@@ -5,7 +5,7 @@ from app.web.app import create_app
 
 
 class TestProductRoutes(unittest.TestCase):
-    """Testa as estórias AD01 e US02 pela API Flask."""
+    """Testa as estórias AD01, US02 e AD02 pela API Flask."""
 
     def setUp(self):
         self.conn = sqlite3.connect(":memory:")
@@ -163,3 +163,88 @@ class TestProductRoutes(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json(), [])
+
+    def test_ad02_update_existing_product_route(self):
+        """AD02: PUT deve editar produto existente e retornar HTTP 200."""
+        self.client.post(
+            "/products",
+            json={
+                "name": "Arroz",
+                "brand": "Tio João",
+                "price": 25.90,
+                "bar_code": "1234567890123",
+                "quantity": 10,
+            },
+        )
+
+        response = self.client.put(
+            "/products/1234567890123",
+            json={
+                "name": "Arroz Integral",
+                "brand": "Nova Marca",
+                "price": 30.50,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.get_json(),
+            {
+                "name": "Arroz Integral",
+                "brand": "Nova Marca",
+                "price": 30.50,
+                "bar_code": "1234567890123",
+                "quantity": 10,
+            },
+        )
+
+    def test_ad02_update_missing_product_route(self):
+        """AD02: edição de produto inexistente deve retornar HTTP 404."""
+        response = self.client.put(
+            "/products/9999999999999",
+            json={
+                "name": "Produto atualizado",
+                "brand": "Marca atualizada",
+                "price": 30.50,
+            },
+        )
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(
+            response.get_json()["erro"],
+            "Produto com o código de barras 9999999999999 não encontrado.",
+        )
+
+    def test_ad02_reject_invalid_update_route(self):
+        """AD02: dados inválidos na edição devem retornar HTTP 400."""
+        self.client.post(
+            "/products",
+            json={
+                "name": "Arroz",
+                "brand": "Tio João",
+                "price": 25.90,
+                "bar_code": "1234567890123",
+                "quantity": 10,
+            },
+        )
+
+        response = self.client.put(
+            "/products/1234567890123",
+            json={
+                "name": "",
+                "brand": "Nova Marca",
+                "price": 30.50,
+            },
+        )
+
+        self.assertEqual(response.status_code, 400)
+
+        stored_product = self.conn.execute(
+            """
+            SELECT name, brand, price
+            FROM products
+            WHERE bar_code = ?;
+            """,
+            ("1234567890123",),
+        ).fetchone()
+        self.assertEqual(stored_product, ("Arroz", "Tio João", 25.90))

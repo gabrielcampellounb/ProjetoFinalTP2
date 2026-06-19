@@ -167,3 +167,27 @@ class TestSQLiteProductRepository(unittest.TestCase):
         results = self.repository.search_products_by_text("inexistente")
 
         self.assertEqual(results, [])
+
+    def test_ad02_update_existing_product(self):
+        """AD02: deve persistir nome, marca e preço atualizados."""
+        original_product = self.create_product()
+        self.repository.add_product(original_product, quantity=10)
+        updated_product = Product(
+            name="Produto atualizado",
+            brand="Marca atualizada",
+            price=15.75,
+            bar_code=original_product.bar_code,
+        )
+
+        self.repository.update_product(updated_product)
+
+        stored_product, stored_quantity = (
+            self.repository.get_product_by_bar_code(
+                original_product.bar_code
+            )
+        )
+        self.assertEqual(stored_product.name, "Produto atualizado")
+        self.assertEqual(stored_product.brand, "Marca atualizada")
+        self.assertEqual(stored_product.price, 15.75)
+        self.assertEqual(stored_product.bar_code, original_product.bar_code)
+        self.assertEqual(stored_quantity, 10)
