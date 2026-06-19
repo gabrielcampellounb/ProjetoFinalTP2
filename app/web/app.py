@@ -16,7 +16,7 @@ from app.web.routes import create_product_blueprint
 
 
 def create_app(connection: sqlite3.Connection) -> Flask:
-    """AD01/US02/AD02: cria a aplicação Flask para produtos.
+    """AD01/US02/AD02/AD03: cria a aplicação Flask para produtos.
 
     Pré-condição: connection deve ser uma conexão SQLite aberta.
     Pós-condição: retorna a aplicação com as rotas de produtos configuradas.

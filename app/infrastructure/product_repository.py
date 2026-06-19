@@ -154,6 +154,23 @@ class SQLiteProductRepository:
         )
         self.connection.commit()
 
+    def update_stock(self, bar_code: str, quantity: int) -> None:
+        """AD03: persiste a quantidade em estoque de um produto.
+
+        Pré-condição: bar_code deve existir e quantity deve ser não negativa.
+        Pós-condição: a nova quantidade é atualizada e confirmada.
+        """
+        validate_quantity(quantity)
+        self.connection.execute(
+            """
+            UPDATE products
+            SET quantity = ?
+            WHERE bar_code = ?;
+            """,
+            (quantity, bar_code),
+        )
+        self.connection.commit()
+
     def _ensure_active_column(self) -> None:
         """AD02: adiciona active a bancos criados antes da remoção lógica."""
         columns = self.connection.execute(

@@ -92,6 +92,21 @@ class ProductService:
         self._get_product_or_raise(bar_code)
         self.product_repository.deactivate_product(bar_code)
 
+    def update_stock(
+        self,
+        bar_code: str,
+        quantity: int,
+    ) -> tuple[Product, int]:
+        """AD03: define a quantidade em estoque de um produto.
+
+        Pré-condição: o produto deve existir e quantity deve ser não negativa.
+        Pós-condição: retorna produto e quantidade com estoque persistido.
+        """
+        validate_quantity(quantity)
+        product, _ = self._get_product_or_raise(bar_code)
+        self.product_repository.update_stock(bar_code, quantity)
+        return product, quantity
+
     def _get_product_or_raise(
         self,
         bar_code: str,

@@ -8,7 +8,7 @@ from app.application.product_service import ProductService
 def create_product_blueprint(
     product_service: ProductService,
 ) -> Blueprint:
-    """AD01/US02/AD02: cria as rotas com o serviço injetado.
+    """AD01/US02/AD02/AD03: cria as rotas com o serviço injetado.
 
     Pré-condição: product_service deve permitir a criação de produtos.
     Pós-condição: retorna uma blueprint com POST /products registrado.
@@ -77,11 +77,26 @@ def create_product_blueprint(
         product_service.deactivate_product(bar_code)
         return "", 204
 
+    @blueprint.patch("/products/<bar_code>/stock")
+    def update_stock(bar_code):
+        """AD03: atualiza a quantidade em estoque de um produto.
+
+        Pré-condição: o produto deve existir e o JSON conter quantity válida.
+        Pós-condição: retorna produto e estoque atualizado com HTTP 200.
+        """
+        data = request.get_json()
+        product, quantity = product_service.update_stock(
+            bar_code=bar_code,
+            quantity=data["quantity"],
+        )
+
+        return jsonify(_serialize_product(product, quantity)), 200
+
     return blueprint
 
 
 def _serialize_product(product, quantity: int) -> dict:
-    """AD01/US02/AD02: converte produto e quantidade para resposta JSON."""
+    """AD01/US02/AD02/AD03: converte produto e estoque para resposta JSON."""
     return {
         "name": product.name,
         "brand": product.brand,
