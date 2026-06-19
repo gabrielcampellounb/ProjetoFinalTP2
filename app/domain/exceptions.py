@@ -1,4 +1,4 @@
-"""Exceções específicas das regras de produtos."""
+"""Exceções específicas das regras de domínio."""
 
 
 class InvalidProductError(Exception):
@@ -15,3 +15,11 @@ class DuplicateBarcodeError(Exception):
 
 class ProductNotFoundError(Exception):
     """Indica que o produto solicitado não foi encontrado."""
+
+
+class InvalidUserError(Exception):
+    """Indica que um atributo viola uma pré-condição do usuário."""
+
+
+class DuplicateEmailError(Exception):
+    """Indica que o e-mail já está cadastrado."""
