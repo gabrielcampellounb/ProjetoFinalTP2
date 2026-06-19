@@ -3,6 +3,7 @@
 from flask import Blueprint, jsonify, request, session
 
 from app.application.cart_service import CartService
+from app.web.serializers import serialize_product
 
 
 def create_cart_blueprint(cart_service: CartService) -> Blueprint:
@@ -23,7 +24,7 @@ def create_cart_blueprint(cart_service: CartService) -> Blueprint:
         cart = session.get("cart", {})
         return jsonify(
             [
-                _serialize_cart_item(product, quantity)
+                serialize_product(product, quantity)
                 for product, quantity in cart_service.get_items(cart)
             ]
         ), 200
@@ -44,7 +45,7 @@ def create_cart_blueprint(cart_service: CartService) -> Blueprint:
         )
         session["cart"] = cart
         return jsonify(
-            _serialize_cart_item(product, data["quantity"])
+            serialize_product(product, data["quantity"])
         ), 201
 
     @blueprint.patch("/cart/items/<bar_code>")
@@ -63,7 +64,7 @@ def create_cart_blueprint(cart_service: CartService) -> Blueprint:
         )
         session["cart"] = cart
         return jsonify(
-            _serialize_cart_item(product, data["quantity"])
+            serialize_product(product, data["quantity"])
         ), 200
 
     @blueprint.delete("/cart/items/<bar_code>")
@@ -79,14 +80,3 @@ def create_cart_blueprint(cart_service: CartService) -> Blueprint:
         return "", 204
 
     return blueprint
-
-
-def _serialize_cart_item(product, quantity: int) -> dict:
-    """US04: converte produto e quantidade para resposta do carrinho."""
-    return {
-        "name": product.name,
-        "brand": product.brand,
-        "price": product.price,
-        "bar_code": product.bar_code,
-        "quantity": quantity,
-    }

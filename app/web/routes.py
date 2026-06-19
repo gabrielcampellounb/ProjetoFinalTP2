@@ -4,6 +4,7 @@ from flask import Blueprint, jsonify, request
 
 from app.application.product_service import ProductService
 from app.web.authorization import admin_required
+from app.web.serializers import serialize_product
 
 
 def create_product_blueprint(
@@ -33,7 +34,7 @@ def create_product_blueprint(
             quantity=data["quantity"],
         )
 
-        return jsonify(_serialize_product(product, data["quantity"])), 201
+        return jsonify(serialize_product(product, data["quantity"])), 201
 
     @blueprint.get("/products")
     def search_products():
@@ -47,7 +48,7 @@ def create_product_blueprint(
 
         return jsonify(
             [
-                _serialize_product(product, quantity)
+                serialize_product(product, quantity)
                 for product, quantity in results
             ]
         ), 200
@@ -68,7 +69,7 @@ def create_product_blueprint(
             price=data["price"],
         )
 
-        return jsonify(_serialize_product(product, quantity)), 200
+        return jsonify(serialize_product(product, quantity)), 200
 
     @blueprint.delete("/products/<bar_code>")
     @admin_required
@@ -95,17 +96,6 @@ def create_product_blueprint(
             quantity=data["quantity"],
         )
 
-        return jsonify(_serialize_product(product, quantity)), 200
+        return jsonify(serialize_product(product, quantity)), 200
 
     return blueprint
-
-
-def _serialize_product(product, quantity: int) -> dict:
-    """AD01/US02/AD02/AD03: converte produto e estoque para resposta JSON."""
-    return {
-        "name": product.name,
-        "brand": product.brand,
-        "price": product.price,
-        "bar_code": product.bar_code,
-        "quantity": quantity,
-    }
