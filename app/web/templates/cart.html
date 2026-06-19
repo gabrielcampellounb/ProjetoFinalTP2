@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}Carrinho | Gerência de Compras{% endblock %}
+
+{% block content %}
+  <h1>Carrinho</h1>
+
+  {% if items %}
+    <table>
+      <thead>
+        <tr>
+          <th>Produto</th>
+          <th>Marca</th>
+          <th>Quantidade</th>
+          <th>Subtotal</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for product, quantity in items %}
+          <tr>
+            <td>{{ product.name }}</td>
+            <td>{{ product.brand }}</td>
+            <td>{{ quantity }}</td>
+            <td>R$ {{ "%.2f"|format(product.price * quantity) }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty">O carrinho está vazio.</p>
+  {% endif %}
+
+  <p><strong>Total estimado: R$ {{ "%.2f"|format(total) }}</strong></p>
+{% endblock %}

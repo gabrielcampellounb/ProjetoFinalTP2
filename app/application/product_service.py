@@ -60,6 +60,14 @@ class ProductService:
 
         return self.product_repository.search_products_by_text(query.strip())
 
+    def list_products(self) -> list[tuple[Product, int]]:
+        """WEB: lista os produtos ativos para exibição no catálogo.
+
+        Pré-condição: o repositório deve permitir listar produtos ativos.
+        Pós-condição: retorna produtos e estoques ordenados pelo repositório.
+        """
+        return self.product_repository.list_active_products()
+
     def get_product(self, bar_code: str) -> tuple[Product, int]:
         """US04: consulta um produto para uso em outros casos de uso.
 

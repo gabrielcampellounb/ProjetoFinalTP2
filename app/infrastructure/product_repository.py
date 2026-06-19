@@ -117,6 +117,22 @@ class SQLiteProductRepository:
 
         return [self._to_product_with_quantity(row) for row in rows]
 
+    def list_active_products(self) -> list[tuple[Product, int]]:
+        """WEB: lista todos os produtos ativos do catálogo.
+
+        Pré-condição: a tabela products deve existir.
+        Pós-condição: retorna produtos ativos ordenados por nome e código.
+        """
+        rows = self.connection.execute(
+            """
+            SELECT bar_code, name, brand, price, quantity
+            FROM products
+            WHERE active = 1
+            ORDER BY name COLLATE NOCASE, bar_code;
+            """
+        ).fetchall()
+        return [self._to_product_with_quantity(row) for row in rows]
+
     def update_product(self, product: Product) -> None:
         """AD02: persiste nome, marca e preço de um produto.
 

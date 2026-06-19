@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Produtos | Gerência de Compras{% endblock %}
+
+{% block content %}
+  <h1>Produtos</h1>
+
+  <form method="get" action="{{ url_for('html.products_page') }}">
+    <label for="q">Buscar por nome ou marca</label>
+    <input id="q" name="q" value="{{ query }}" placeholder="Ex.: arroz">
+    <button type="submit">Buscar</button>
+  </form>
+
+  {% if query %}
+    <h2>Resultados para “{{ query }}”</h2>
+  {% endif %}
+
+  {% if products %}
+    <table>
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Marca</th>
+          <th>Preço base</th>
+          <th>Estoque</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for product, quantity in products %}
+          <tr>
+            <td>{{ product.name }}</td>
+            <td>{{ product.brand }}</td>
+            <td>R$ {{ "%.2f"|format(product.price) }}</td>
+            <td>{{ quantity }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty">Nenhum produto encontrado.</p>
+  {% endif %}
+{% endblock %}
