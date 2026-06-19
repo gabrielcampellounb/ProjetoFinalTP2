@@ -31,6 +31,55 @@ def create_shopping_list_blueprint(
         )
         return jsonify(_serialize_shopping_list(shopping_list)), 201
 
+    @blueprint.post("/shopping-lists/<int:list_id>/items")
+    @authenticated_required
+    def add_item(list_id):
+        """US03: adiciona um produto à lista do usuário autenticado.
+
+        Pré-condição: sessão, lista própria, produto e quantidade válidos.
+        Pós-condição: retorna o item criado com HTTP 201.
+        """
+        data = request.get_json()
+        item = shopping_list_service.add_item(
+            user_id=session["user_id"],
+            list_id=list_id,
+            bar_code=data["bar_code"],
+            quantity=data["quantity"],
+        )
+        return jsonify(_serialize_item(item)), 201
+
+    @blueprint.patch("/shopping-lists/<int:list_id>/items/<bar_code>")
+    @authenticated_required
+    def update_item(list_id, bar_code):
+        """US03: altera a quantidade de um item da lista própria.
+
+        Pré-condição: sessão, lista própria, item e quantidade válidos.
+        Pós-condição: retorna o item atualizado com HTTP 200.
+        """
+        data = request.get_json()
+        item = shopping_list_service.update_item(
+            user_id=session["user_id"],
+            list_id=list_id,
+            bar_code=bar_code,
+            quantity=data["quantity"],
+        )
+        return jsonify(_serialize_item(item)), 200
+
+    @blueprint.delete("/shopping-lists/<int:list_id>/items/<bar_code>")
+    @authenticated_required
+    def remove_item(list_id, bar_code):
+        """US03: remove um item existente da lista própria.
+
+        Pré-condição: sessão autenticada, lista própria e item existente.
+        Pós-condição: remove o item e retorna HTTP 204.
+        """
+        shopping_list_service.remove_item(
+            user_id=session["user_id"],
+            list_id=list_id,
+            bar_code=bar_code,
+        )
+        return "", 204
+
     return blueprint
 
 
@@ -41,4 +90,13 @@ def _serialize_shopping_list(shopping_list) -> dict:
         "user_id": shopping_list.user_id,
         "name": shopping_list.name,
         "created_at": shopping_list.created_at.isoformat(),
+    }
+
+
+def _serialize_item(item) -> dict:
+    """US03: converte um item de lista para resposta JSON."""
+    return {
+        "list_id": item.list_id,
+        "bar_code": item.bar_code,
+        "quantity": item.quantity,
     }

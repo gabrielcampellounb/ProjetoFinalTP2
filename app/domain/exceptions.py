@@ -31,3 +31,11 @@ class InvalidCredentialsError(Exception):
 
 class InvalidShoppingListError(Exception):
     """Indica que uma lista de compras viola uma pré-condição."""
+
+
+class ShoppingListNotFoundError(Exception):
+    """Indica que a lista não existe ou não pertence ao usuário."""
+
+
+class ShoppingListItemNotFoundError(Exception):
+    """Indica que o item solicitado não existe na lista."""

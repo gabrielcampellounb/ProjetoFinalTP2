@@ -15,6 +15,8 @@ from app.domain.exceptions import (
     InvalidShoppingListError,
     InvalidUserError,
     ProductNotFoundError,
+    ShoppingListItemNotFoundError,
+    ShoppingListNotFoundError,
 )
 from app.web.auth_routes import create_auth_blueprint
 from app.web.dependencies import (
@@ -73,6 +75,8 @@ def _register_error_handlers(flask_app: Flask) -> None:
         return jsonify({"erro": str(error)}), 401
 
     @flask_app.errorhandler(ProductNotFoundError)
+    @flask_app.errorhandler(ShoppingListItemNotFoundError)
+    @flask_app.errorhandler(ShoppingListNotFoundError)
     def handle_product_not_found(error):
         return jsonify({"erro": str(error)}), 404
 

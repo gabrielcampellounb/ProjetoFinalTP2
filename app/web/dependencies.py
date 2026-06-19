@@ -48,4 +48,6 @@ def initialize_shopping_list_service(
     """
     repository = SQLiteShoppingListRepository(connection)
     repository.create_table()
-    return ShoppingListService(repository)
+    product_repository = SQLiteProductRepository(connection)
+    product_repository.create_table()
+    return ShoppingListService(repository, product_repository)

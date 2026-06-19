@@ -62,3 +62,53 @@ class ShoppingList:
                 "A data de criação da lista deve ser válida."
             )
         return created_at
+
+
+class ShoppingListItem:
+    """US03: representa um produto e sua quantidade em uma lista."""
+
+    def __init__(
+        self,
+        list_id: int,
+        bar_code: str,
+        quantity: int,
+    ) -> None:
+        """US03: cria um item de lista validado.
+
+        Pré-condição: lista, produto e quantidade devem ser válidos.
+        Pós-condição: cria o item ou lança InvalidShoppingListError.
+        """
+        self.list_id = self._validate_list_id(list_id)
+        self.bar_code = self._validate_bar_code(bar_code)
+        self.quantity = self._validate_quantity(quantity)
+
+    @staticmethod
+    def _validate_list_id(list_id: int) -> int:
+        """US03: valida o identificador da lista do item."""
+        if isinstance(list_id, bool) or not isinstance(list_id, int):
+            raise InvalidShoppingListError(
+                "O identificador da lista deve ser um número inteiro."
+            )
+        return list_id
+
+    @staticmethod
+    def _validate_bar_code(bar_code: str) -> str:
+        """US03: valida o código do produto associado ao item."""
+        if not isinstance(bar_code, str) or not bar_code:
+            raise InvalidShoppingListError(
+                "O código de barras do item não pode estar vazio."
+            )
+        return bar_code
+
+    @staticmethod
+    def _validate_quantity(quantity: int) -> int:
+        """US03: valida a quantidade planejada do item."""
+        if (
+            isinstance(quantity, bool)
+            or not isinstance(quantity, int)
+            or quantity <= 0
+        ):
+            raise InvalidShoppingListError(
+                "A quantidade do item deve ser maior que zero."
+            )
+        return quantity
