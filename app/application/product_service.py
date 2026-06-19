@@ -89,3 +89,19 @@ class ProductService:
         )
         self.product_repository.update_product(updated_product)
         return updated_product, quantity
+
+    def deactivate_product(self, bar_code: str) -> None:
+        """AD02: remove logicamente um produto existente.
+
+        Pré-condição: bar_code deve identificar um produto cadastrado.
+        Pós-condição: o produto permanece armazenado, marcado como inativo.
+        """
+        stored_product = self.product_repository.get_product_by_bar_code(
+            bar_code
+        )
+        if stored_product is None:
+            raise ProductNotFoundError(
+                f"Produto com o código de barras {bar_code} não encontrado."
+            )
+
+        self.product_repository.deactivate_product(bar_code)

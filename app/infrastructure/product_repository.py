@@ -31,10 +31,12 @@ class SQLiteProductRepository:
                 name TEXT NOT NULL,
                 brand TEXT NOT NULL,
                 price REAL NOT NULL,
-                quantity INTEGER NOT NULL
+                quantity INTEGER NOT NULL,
+                active INTEGER NOT NULL DEFAULT 1
             );
             """
         )
+        self._ensure_active_column()
         self.connection.commit()
 
     def add_product(self, product: Product, quantity: int) -> None:
@@ -103,8 +105,11 @@ class SQLiteProductRepository:
             """
             SELECT bar_code, name, brand, price, quantity
             FROM products
-            WHERE name LIKE ? COLLATE NOCASE
-               OR brand LIKE ? COLLATE NOCASE
+            WHERE active = 1
+              AND (
+                  name LIKE ? COLLATE NOCASE
+                  OR brand LIKE ? COLLATE NOCASE
+              )
             ORDER BY name, bar_code;
             """,
             (search_pattern, search_pattern),
@@ -132,6 +137,37 @@ class SQLiteProductRepository:
             ),
         )
         self.connection.commit()
+
+    def deactivate_product(self, bar_code: str) -> None:
+        """AD02: marca um produto como inativo sem apagar sua linha.
+
+        Pré-condição: bar_code deve identificar um produto cadastrado.
+        Pós-condição: o registro permanece no banco com active igual a zero.
+        """
+        self.connection.execute(
+            """
+            UPDATE products
+            SET active = 0
+            WHERE bar_code = ?;
+            """,
+            (bar_code,),
+        )
+        self.connection.commit()
+
+    def _ensure_active_column(self) -> None:
+        """AD02: adiciona active a bancos criados antes da remoção lógica."""
+        columns = self.connection.execute(
+            "PRAGMA table_info(products);"
+        ).fetchall()
+        column_names = {column[1] for column in columns}
+
+        if "active" not in column_names:
+            self.connection.execute(
+                """
+                ALTER TABLE products
+                ADD COLUMN active INTEGER NOT NULL DEFAULT 1;
+                """
+            )
 
     @staticmethod
     def _to_product_with_quantity(row) -> tuple[Product, int]:

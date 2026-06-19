@@ -67,6 +67,16 @@ def create_product_blueprint(
 
         return jsonify(_serialize_product(product, quantity)), 200
 
+    @blueprint.delete("/products/<bar_code>")
+    def deactivate_product(bar_code):
+        """AD02: remove logicamente um produto pelo código de barras.
+
+        Pré-condição: o código deve identificar um produto cadastrado.
+        Pós-condição: desativa o produto e retorna HTTP 204 sem conteúdo.
+        """
+        product_service.deactivate_product(bar_code)
+        return "", 204
+
     return blueprint
 
 
