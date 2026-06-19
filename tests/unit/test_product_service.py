@@ -2,6 +2,7 @@ import unittest
 
 from app.application.product_service import ProductService
 from app.domain.exceptions import DuplicateBarcodeError, InvalidQuantityError
+from app.domain.product import Product
 
 
 class FakeProductRepository:
@@ -9,6 +10,7 @@ class FakeProductRepository:
 
     def __init__(self):
         self.products = {}
+        self.last_search_query = None
 
     def add_product(self, product, quantity):
         self.products[product.bar_code] = (product, quantity)
@@ -16,9 +18,13 @@ class FakeProductRepository:
     def get_product_by_bar_code(self, bar_code):
         return self.products.get(bar_code)
 
+    def search_products_by_text(self, query):
+        self.last_search_query = query
+        return list(self.products.values())
+
 
 class TestProductService(unittest.TestCase):
-    """Testa a criação de produtos pelo serviço."""
+    """Testa os casos de uso de produtos."""
 
     def setUp(self):
         self.repository = FakeProductRepository()
@@ -106,3 +112,25 @@ class TestProductService(unittest.TestCase):
                     )
 
                 self.assertNotIn(bar_code, self.repository.products)
+
+    def test_us02_search_products_by_text(self):
+        """US02: deve buscar produtos usando o texto recebido."""
+        expected_product = Product(
+            name="Arroz Integral",
+            brand="Tio João",
+            price=12.50,
+            bar_code="1234567890444",
+        )
+        self.repository.add_product(expected_product, quantity=8)
+
+        results = self.service.search_products("arroz")
+
+        self.assertEqual(self.repository.last_search_query, "arroz")
+        self.assertIn((expected_product, 8), results)
+
+    def test_us02_empty_query_returns_empty_list(self):
+        """US02: query vazia deve retornar lista vazia sem consultar dados."""
+        results = self.service.search_products("   ")
+
+        self.assertEqual(results, [])
+        self.assertIsNone(self.repository.last_search_query)

@@ -8,7 +8,7 @@ from app.infrastructure.product_repository import SQLiteProductRepository
 
 
 class TestSQLiteProductRepository(unittest.TestCase):
-    """Testa a persistência real de produtos em SQLite."""
+    """Testa a persistência e consulta real de produtos em SQLite."""
 
     def setUp(self):
         self.connection = sqlite3.connect(":memory:")
@@ -110,3 +110,60 @@ class TestSQLiteProductRepository(unittest.TestCase):
         self.assertEqual(stored_product.name, "Produto original")
         self.assertEqual(stored_quantity, 10)
         self.assertEqual(record_count, 1)
+
+    def test_us02_search_products_by_partial_name(self):
+        """US02: deve buscar produtos por parte do nome."""
+        rice = Product(
+            name="Arroz Integral",
+            brand="Tio João",
+            price=12.50,
+            bar_code="1234567890444",
+        )
+        beans = Product(
+            name="Feijão Carioca",
+            brand="Camil",
+            price=8.90,
+            bar_code="1234567890555",
+        )
+        self.repository.add_product(rice, quantity=8)
+        self.repository.add_product(beans, quantity=5)
+
+        results = self.repository.search_products_by_text("ARROZ")
+
+        self.assertEqual(len(results), 1)
+        product, quantity = results[0]
+        self.assertEqual(product.name, "Arroz Integral")
+        self.assertEqual(quantity, 8)
+
+    def test_us02_search_products_by_partial_brand(self):
+        """US02: deve buscar produtos por parte da marca."""
+        rice = Product(
+            name="Arroz Integral",
+            brand="Tio João",
+            price=12.50,
+            bar_code="1234567890444",
+        )
+        beans = Product(
+            name="Feijão Carioca",
+            brand="Camil Alimentos",
+            price=8.90,
+            bar_code="1234567890555",
+        )
+        self.repository.add_product(rice, quantity=8)
+        self.repository.add_product(beans, quantity=5)
+
+        results = self.repository.search_products_by_text("camil")
+
+        self.assertEqual(len(results), 1)
+        product, quantity = results[0]
+        self.assertEqual(product.brand, "Camil Alimentos")
+        self.assertEqual(quantity, 5)
+
+    def test_us02_search_without_results_returns_empty_list(self):
+        """US02: busca sem correspondência deve retornar lista vazia."""
+        product = self.create_product()
+        self.repository.add_product(product, quantity=10)
+
+        results = self.repository.search_products_by_text("inexistente")
+
+        self.assertEqual(results, [])

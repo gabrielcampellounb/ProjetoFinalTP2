@@ -4,8 +4,8 @@ import unittest
 from app.web.app import create_app
 
 
-class TestAD01ProductRoutes(unittest.TestCase):
-    """AD01: testa o cadastro de produtos pela API Flask."""
+class TestProductRoutes(unittest.TestCase):
+    """Testa as estórias AD01 e US02 pela API Flask."""
 
     def setUp(self):
         self.conn = sqlite3.connect(":memory:")
@@ -92,3 +92,74 @@ class TestAD01ProductRoutes(unittest.TestCase):
             response.get_json()["erro"],
             "O campo 'quantity' é obrigatório.",
         )
+
+    def test_us02_search_products_route(self):
+        """US02: GET /products deve buscar por parte do nome."""
+        self.client.post(
+            "/products",
+            json={
+                "name": "Arroz Integral",
+                "brand": "Tio João",
+                "price": 12.50,
+                "bar_code": "1234567890444",
+                "quantity": 8,
+            },
+        )
+        self.client.post(
+            "/products",
+            json={
+                "name": "Feijão Carioca",
+                "brand": "Camil",
+                "price": 8.90,
+                "bar_code": "1234567890555",
+                "quantity": 5,
+            },
+        )
+
+        response = self.client.get("/products?q=arroz")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.get_json(),
+            [
+                {
+                    "name": "Arroz Integral",
+                    "brand": "Tio João",
+                    "price": 12.50,
+                    "bar_code": "1234567890444",
+                    "quantity": 8,
+                }
+            ],
+        )
+
+    def test_us02_search_products_by_brand_route(self):
+        """US02: GET /products deve buscar por parte da marca."""
+        self.client.post(
+            "/products",
+            json={
+                "name": "Feijão Carioca",
+                "brand": "Camil Alimentos",
+                "price": 8.90,
+                "bar_code": "1234567890555",
+                "quantity": 5,
+            },
+        )
+
+        response = self.client.get("/products?q=camil")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json()[0]["brand"], "Camil Alimentos")
+
+    def test_us02_search_without_results_returns_empty_list(self):
+        """US02: busca sem resultado deve retornar lista vazia e HTTP 200."""
+        response = self.client.get("/products?q=inexistente")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json(), [])
+
+    def test_us02_empty_query_returns_empty_list(self):
+        """US02: query vazia deve retornar lista vazia e HTTP 200."""
+        response = self.client.get("/products?q=")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json(), [])
