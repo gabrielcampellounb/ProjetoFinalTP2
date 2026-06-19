@@ -44,6 +44,56 @@ class TestWEBHtmlRoutes(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("Gerência de Compras", response.get_data(as_text=True))
 
+    def test_us01_web_login_page(self):
+        """US01/WEB: tela de login deve responder 200 e exibir formulário."""
+        response = self.client.get("/login")
+
+        self.assertEqual(response.status_code, 200)
+        html = response.get_data(as_text=True)
+        self.assertIn("Entrar", html)
+        self.assertIn('name="email"', html)
+        self.assertIn('name="password"', html)
+
+    def test_us01_web_login_valid_user_redirects_to_catalog(self):
+        """US01/WEB: credenciais válidas devem criar sessão e redirecionar."""
+        self.client.post(
+            "/auth/register",
+            json={
+                "name": "Maria Silva",
+                "email": "maria@example.com",
+                "password": "senha-segura",
+            },
+        )
+
+        response = self.client.post(
+            "/login",
+            data={
+                "email": "maria@example.com",
+                "password": "senha-segura",
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response.headers["Location"].endswith("/catalog"))
+        with self.client.session_transaction() as flask_session:
+            self.assertIsInstance(flask_session["user_id"], int)
+            self.assertEqual(flask_session["role"], "user")
+
+    def test_us01_web_login_invalid_credentials_returns_html(self):
+        """US01/WEB: credenciais inválidas devem manter a tela com HTTP 401."""
+        response = self.client.post(
+            "/login",
+            data={
+                "email": "inexistente@example.com",
+                "password": "senha-incorreta",
+            },
+        )
+
+        self.assertEqual(response.status_code, 401)
+        html = response.get_data(as_text=True)
+        self.assertIn("E-mail ou senha inválidos.", html)
+        self.assertIn("Entrar", html)
+
     def test_web_product_listing_page(self):
         """WEB: catálogo deve responder 200 e listar produtos ativos."""
         response = self.client.get("/catalog")
