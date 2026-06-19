@@ -31,15 +31,7 @@ def create_product_blueprint(
             quantity=data["quantity"],
         )
 
-        return jsonify(
-            {
-                "name": product.name,
-                "brand": product.brand,
-                "price": product.price,
-                "bar_code": product.bar_code,
-                "quantity": data["quantity"],
-            }
-        ), 201
+        return jsonify(_serialize_product(product, data["quantity"])), 201
 
     @blueprint.get("/products")
     def search_products():
@@ -53,15 +45,20 @@ def create_product_blueprint(
 
         return jsonify(
             [
-                {
-                    "name": product.name,
-                    "brand": product.brand,
-                    "price": product.price,
-                    "bar_code": product.bar_code,
-                    "quantity": quantity,
-                }
+                _serialize_product(product, quantity)
                 for product, quantity in results
             ]
         ), 200
 
     return blueprint
+
+
+def _serialize_product(product, quantity: int) -> dict:
+    """AD01/US02: converte produto e quantidade para resposta JSON."""
+    return {
+        "name": product.name,
+        "brand": product.brand,
+        "price": product.price,
+        "bar_code": product.bar_code,
+        "quantity": quantity,
+    }

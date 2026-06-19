@@ -87,13 +87,7 @@ class SQLiteProductRepository:
         if row is None:
             return None
 
-        product = Product(
-            name=row[1],
-            brand=row[2],
-            price=row[3],
-            bar_code=row[0],
-        )
-        return product, row[4]
+        return self._to_product_with_quantity(row)
 
     def search_products_by_text(
         self,
@@ -116,14 +110,15 @@ class SQLiteProductRepository:
             (search_pattern, search_pattern),
         ).fetchall()
 
-        results = []
-        for row in rows:
-            product = Product(
-                name=row[1],
-                brand=row[2],
-                price=row[3],
-                bar_code=row[0],
-            )
-            results.append((product, row[4]))
+        return [self._to_product_with_quantity(row) for row in rows]
 
-        return results
+    @staticmethod
+    def _to_product_with_quantity(row) -> tuple[Product, int]:
+        """US02: converte uma linha SQLite em produto e quantidade."""
+        product = Product(
+            name=row[1],
+            brand=row[2],
+            price=row[3],
+            bar_code=row[0],
+        )
+        return product, row[4]
