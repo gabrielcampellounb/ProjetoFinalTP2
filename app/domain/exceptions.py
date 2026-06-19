@@ -39,3 +39,11 @@ class ShoppingListNotFoundError(Exception):
 
 class ShoppingListItemNotFoundError(Exception):
     """Indica que o item solicitado não existe na lista."""
+
+
+class InvalidCartError(Exception):
+    """Indica que um item do carrinho viola uma pré-condição."""
+
+
+class CartItemNotFoundError(Exception):
+    """Indica que o item solicitado não existe no carrinho."""

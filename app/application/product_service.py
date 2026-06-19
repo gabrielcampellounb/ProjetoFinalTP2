@@ -60,6 +60,14 @@ class ProductService:
 
         return self.product_repository.search_products_by_text(query.strip())
 
+    def get_product(self, bar_code: str) -> tuple[Product, int]:
+        """US04: consulta um produto para uso em outros casos de uso.
+
+        Pré-condição: bar_code deve identificar um produto cadastrado.
+        Pós-condição: retorna produto e estoque ou lança ProductNotFoundError.
+        """
+        return self._get_product_or_raise(bar_code)
+
     def update_product(
         self,
         bar_code: str,

@@ -7,8 +7,10 @@ from flask import Flask, jsonify
 from werkzeug.exceptions import BadRequest
 
 from app.domain.exceptions import (
+    CartItemNotFoundError,
     DuplicateBarcodeError,
     DuplicateEmailError,
+    InvalidCartError,
     InvalidCredentialsError,
     InvalidProductError,
     InvalidQuantityError,
@@ -19,7 +21,9 @@ from app.domain.exceptions import (
     ShoppingListNotFoundError,
 )
 from app.web.auth_routes import create_auth_blueprint
+from app.web.cart_routes import create_cart_blueprint
 from app.web.dependencies import (
+    initialize_cart_service,
     initialize_product_service,
     initialize_shopping_list_service,
     initialize_user_service,
@@ -29,7 +33,7 @@ from app.web.shopping_list_routes import create_shopping_list_blueprint
 
 
 def create_app(connection: sqlite3.Connection) -> Flask:
-    """AD01/US01/US02/US03/AD02/AD03/RNF02: cria a aplicação Flask.
+    """AD01/US01/US02/US03/US04/AD02/AD03/RNF02: cria a aplicação.
 
     Pré-condição: connection deve ser uma conexão SQLite aberta.
     Pós-condição: retorna a aplicação com autenticação e autorização.
@@ -40,12 +44,14 @@ def create_app(connection: sqlite3.Connection) -> Flask:
         "development-secret-key",
     )
     product_service = initialize_product_service(connection)
+    cart_service = initialize_cart_service(product_service)
     user_service = initialize_user_service(connection)
     shopping_list_service = initialize_shopping_list_service(connection)
 
     flask_app.register_blueprint(
         create_product_blueprint(product_service)
     )
+    flask_app.register_blueprint(create_cart_blueprint(cart_service))
     flask_app.register_blueprint(create_auth_blueprint(user_service))
     flask_app.register_blueprint(
         create_shopping_list_blueprint(shopping_list_service)
@@ -59,6 +65,7 @@ def _register_error_handlers(flask_app: Flask) -> None:
     """AD01/US01/AD02: registra respostas HTTP para erros esperados."""
 
     @flask_app.errorhandler(InvalidProductError)
+    @flask_app.errorhandler(InvalidCartError)
     @flask_app.errorhandler(InvalidQuantityError)
     @flask_app.errorhandler(InvalidShoppingListError)
     @flask_app.errorhandler(InvalidUserError)
@@ -75,6 +82,7 @@ def _register_error_handlers(flask_app: Flask) -> None:
         return jsonify({"erro": str(error)}), 401
 
     @flask_app.errorhandler(ProductNotFoundError)
+    @flask_app.errorhandler(CartItemNotFoundError)
     @flask_app.errorhandler(ShoppingListItemNotFoundError)
     @flask_app.errorhandler(ShoppingListNotFoundError)
     def handle_product_not_found(error):

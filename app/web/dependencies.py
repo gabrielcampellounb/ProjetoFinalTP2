@@ -2,6 +2,7 @@
 
 import sqlite3
 
+from app.application.cart_service import CartService
 from app.application.product_service import ProductService
 from app.application.shopping_list_service import ShoppingListService
 from app.application.user_service import UserService
@@ -23,6 +24,17 @@ def initialize_product_service(
     product_repository = SQLiteProductRepository(connection)
     product_repository.create_table()
     return ProductService(product_repository)
+
+
+def initialize_cart_service(
+    product_service: ProductService,
+) -> CartService:
+    """US04: inicializa o carrinho reutilizando o serviço de produtos.
+
+    Pré-condição: product_service deve permitir consulta de produtos.
+    Pós-condição: retorna o serviço de carrinho configurado.
+    """
+    return CartService(product_service)
 
 
 def initialize_user_service(
