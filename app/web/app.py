@@ -24,10 +24,10 @@ from app.web.routes import create_product_blueprint
 
 
 def create_app(connection: sqlite3.Connection) -> Flask:
-    """AD01/US01/US02/AD02/AD03: cria a aplicação Flask.
+    """AD01/US01/US02/AD02/AD03/RNF02: cria a aplicação Flask.
 
     Pré-condição: connection deve ser uma conexão SQLite aberta.
-    Pós-condição: retorna a aplicação com produtos e autenticação configurados.
+    Pós-condição: retorna a aplicação com autenticação e autorização.
     """
     flask_app = Flask(__name__)
     flask_app.config["SECRET_KEY"] = os.environ.get(

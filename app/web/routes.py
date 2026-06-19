@@ -3,23 +3,25 @@
 from flask import Blueprint, jsonify, request
 
 from app.application.product_service import ProductService
+from app.web.authorization import admin_required
 
 
 def create_product_blueprint(
     product_service: ProductService,
 ) -> Blueprint:
-    """AD01/US02/AD02/AD03: cria as rotas com o serviço injetado.
+    """AD01/US02/AD02/AD03/RNF02: cria rotas com serviço injetado.
 
     Pré-condição: product_service deve permitir a criação de produtos.
-    Pós-condição: retorna uma blueprint com POST /products registrado.
+    Pós-condição: retorna rotas públicas e administrativas configuradas.
     """
     blueprint = Blueprint("products", __name__)
 
     @blueprint.post("/products")
+    @admin_required
     def create_product():
-        """AD01: cria um produto a partir dos dados JSON recebidos.
+        """AD01/RNF02: permite ao admin criar um produto.
 
-        Pré-condição: a requisição deve conter os campos obrigatórios.
+        Pré-condição: sessão admin e JSON com campos obrigatórios.
         Pós-condição: retorna o produto criado em JSON com HTTP 201.
         """
         data = request.get_json()
@@ -35,7 +37,7 @@ def create_product_blueprint(
 
     @blueprint.get("/products")
     def search_products():
-        """US02: busca produtos por nome ou marca.
+        """US02/RNF02: busca pública de produtos por nome ou marca.
 
         Pré-condição: o parâmetro opcional q contém o texto da busca.
         Pós-condição: retorna uma lista JSON e HTTP 200.
@@ -51,10 +53,11 @@ def create_product_blueprint(
         ), 200
 
     @blueprint.put("/products/<bar_code>")
+    @admin_required
     def update_product(bar_code):
-        """AD02: edita um produto identificado pelo código de barras.
+        """AD02/RNF02: permite ao admin editar um produto.
 
-        Pré-condição: o produto deve existir e o JSON deve ser válido.
+        Pré-condição: sessão admin, produto existente e JSON válido.
         Pós-condição: retorna o produto atualizado em JSON com HTTP 200.
         """
         data = request.get_json()
@@ -68,20 +71,22 @@ def create_product_blueprint(
         return jsonify(_serialize_product(product, quantity)), 200
 
     @blueprint.delete("/products/<bar_code>")
+    @admin_required
     def deactivate_product(bar_code):
-        """AD02: remove logicamente um produto pelo código de barras.
+        """AD02/RNF02: permite ao admin remover logicamente um produto.
 
-        Pré-condição: o código deve identificar um produto cadastrado.
+        Pré-condição: sessão admin e código de produto cadastrado.
         Pós-condição: desativa o produto e retorna HTTP 204 sem conteúdo.
         """
         product_service.deactivate_product(bar_code)
         return "", 204
 
     @blueprint.patch("/products/<bar_code>/stock")
+    @admin_required
     def update_stock(bar_code):
-        """AD03: atualiza a quantidade em estoque de um produto.
+        """AD03/RNF02: permite ao admin atualizar o estoque.
 
-        Pré-condição: o produto deve existir e o JSON conter quantity válida.
+        Pré-condição: sessão admin, produto existente e quantity válida.
         Pós-condição: retorna produto e estoque atualizado com HTTP 200.
         """
         data = request.get_json()
