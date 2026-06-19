@@ -34,6 +34,24 @@ class TestUS04CartRoutes(unittest.TestCase):
         with self.client.session_transaction() as flask_session:
             flask_session.clear()
 
+    def create_second_product(self):
+        """US05: cadastra um segundo produto para o cálculo do total."""
+        with self.client.session_transaction() as flask_session:
+            flask_session["user_id"] = 1
+            flask_session["role"] = "admin"
+        self.client.post(
+            "/products",
+            json={
+                "name": "Feijão Carioca",
+                "brand": "Camil",
+                "price": 8.90,
+                "bar_code": "1234567890555",
+                "quantity": 5,
+            },
+        )
+        with self.client.session_transaction() as flask_session:
+            flask_session.clear()
+
     def test_us04_empty_cart(self):
         """US04: GET /cart deve retornar lista vazia inicialmente."""
         response = self.client.get("/cart")
@@ -133,3 +151,48 @@ class TestUS04CartRoutes(unittest.TestCase):
         self.assertEqual(response.status_code, 204)
         self.assertEqual(response.data, b"")
         self.assertEqual(self.client.get("/cart").get_json(), [])
+
+    def test_us05_empty_cart_total_route(self):
+        """US05: carrinho vazio deve retornar total zero."""
+        response = self.client.get("/cart/total")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json(), {"total": 0})
+
+    def test_us05_single_item_total_route(self):
+        """US05: rota deve calcular preço vezes quantidade."""
+        self.client.post(
+            "/cart/items",
+            json={
+                "bar_code": "1234567890444",
+                "quantity": 2,
+            },
+        )
+
+        response = self.client.get("/cart/total")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json(), {"total": 25.0})
+
+    def test_us05_multiple_items_total_route(self):
+        """US05: rota deve somar os subtotais de vários itens."""
+        self.create_second_product()
+        self.client.post(
+            "/cart/items",
+            json={
+                "bar_code": "1234567890444",
+                "quantity": 2,
+            },
+        )
+        self.client.post(
+            "/cart/items",
+            json={
+                "bar_code": "1234567890555",
+                "quantity": 3,
+            },
+        )
+
+        response = self.client.get("/cart/total")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertAlmostEqual(response.get_json()["total"], 51.70)
