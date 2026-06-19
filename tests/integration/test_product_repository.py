@@ -266,3 +266,23 @@ class TestSQLiteProductRepository(unittest.TestCase):
             self.repository.search_products_by_text("arroz"),
             [],
         )
+
+    def test_ad03_update_product_stock(self):
+        """AD03: deve persistir a nova quantidade do produto."""
+        product = Product(
+            name="Arroz Integral",
+            brand="Tio João",
+            price=12.50,
+            bar_code="1234567890444",
+        )
+        self.repository.add_product(product, quantity=8)
+
+        self.repository.update_stock(product.bar_code, quantity=20)
+
+        stored_product, stored_quantity = (
+            self.repository.get_product_by_bar_code(product.bar_code)
+        )
+        search_results = self.repository.search_products_by_text("arroz")
+        self.assertEqual(stored_product.bar_code, product.bar_code)
+        self.assertEqual(stored_quantity, 20)
+        self.assertEqual(search_results[0][1], 20)

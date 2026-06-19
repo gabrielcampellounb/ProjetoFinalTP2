@@ -5,7 +5,7 @@ from app.web.app import create_app
 
 
 class TestProductRoutes(unittest.TestCase):
-    """Testa as estórias AD01, US02 e AD02 pela API Flask."""
+    """Testa as estórias AD01, US02, AD02 e AD03 pela API Flask."""
 
     def setUp(self):
         self.conn = sqlite3.connect(":memory:")
@@ -282,6 +282,71 @@ class TestProductRoutes(unittest.TestCase):
     def test_ad02_deactivate_missing_product_route(self):
         """AD02: remoção de produto inexistente deve retornar HTTP 404."""
         response = self.client.delete("/products/9999999999999")
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(
+            response.get_json()["erro"],
+            "Produto com o código de barras 9999999999999 não encontrado.",
+        )
+
+    def test_ad03_update_existing_product_stock_route(self):
+        """AD03: PATCH deve atualizar estoque e retornar HTTP 200."""
+        self.client.post(
+            "/products",
+            json={
+                "name": "Arroz Integral",
+                "brand": "Tio João",
+                "price": 12.50,
+                "bar_code": "1234567890444",
+                "quantity": 8,
+            },
+        )
+
+        response = self.client.patch(
+            "/products/1234567890444/stock",
+            json={"quantity": 20},
+        )
+        search_response = self.client.get("/products?q=arroz")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json()["quantity"], 20)
+        self.assertEqual(search_response.get_json()[0]["quantity"], 20)
+
+    def test_ad03_reject_negative_stock_route(self):
+        """AD03: quantidade negativa deve retornar HTTP 400."""
+        self.client.post(
+            "/products",
+            json={
+                "name": "Arroz Integral",
+                "brand": "Tio João",
+                "price": 12.50,
+                "bar_code": "1234567890444",
+                "quantity": 8,
+            },
+        )
+
+        response = self.client.patch(
+            "/products/1234567890444/stock",
+            json={"quantity": -1},
+        )
+        stored_quantity = self.conn.execute(
+            """
+            SELECT quantity
+            FROM products
+            WHERE bar_code = ?;
+            """,
+            ("1234567890444",),
+        ).fetchone()[0]
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(stored_quantity, 8)
+
+    def test_ad03_reject_stock_update_for_missing_product_route(self):
+        """AD03: estoque de produto inexistente deve retornar HTTP 404."""
+        response = self.client.patch(
+            "/products/9999999999999/stock",
+            json={"quantity": 20},
+        )
 
         self.assertEqual(response.status_code, 404)
         self.assertEqual(

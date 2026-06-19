@@ -39,6 +39,10 @@ class FakeProductRepository:
     def deactivate_product(self, bar_code):
         self.inactive_bar_codes.add(bar_code)
 
+    def update_stock(self, bar_code, quantity):
+        product, _ = self.products[bar_code]
+        self.products[bar_code] = (product, quantity)
+
 
 class TestProductService(unittest.TestCase):
     """Testa os casos de uso de produtos."""
@@ -221,3 +225,43 @@ class TestProductService(unittest.TestCase):
             "^Produto com o código de barras 9999999999999 não encontrado\\.$",
         ):
             self.service.deactivate_product("9999999999999")
+
+    def test_ad03_update_existing_product_stock(self):
+        """AD03: deve definir a nova quantidade de produto existente."""
+        product, quantity = self.service.update_stock(
+            self.product.bar_code,
+            quantity=20,
+        )
+
+        stored_product, stored_quantity = self.repository.products[
+            self.product.bar_code
+        ]
+        self.assertIs(product, self.product)
+        self.assertEqual(quantity, 20)
+        self.assertIs(stored_product, self.product)
+        self.assertEqual(stored_quantity, 20)
+
+    def test_ad03_reject_negative_stock_without_changing_quantity(self):
+        """AD03: quantidade negativa não deve alterar o estoque."""
+        with self.assertRaisesRegex(
+            InvalidQuantityError,
+            "^A quantidade do produto não pode ser negativa\\.$",
+        ):
+            self.service.update_stock(
+                self.product.bar_code,
+                quantity=-1,
+            )
+
+        _, stored_quantity = self.repository.products[self.product.bar_code]
+        self.assertEqual(stored_quantity, 5)
+
+    def test_ad03_reject_stock_update_for_missing_product(self):
+        """AD03: deve rejeitar estoque de produto inexistente."""
+        with self.assertRaisesRegex(
+            ProductNotFoundError,
+            "^Produto com o código de barras 9999999999999 não encontrado\\.$",
+        ):
+            self.service.update_stock(
+                "9999999999999",
+                quantity=20,
+            )
