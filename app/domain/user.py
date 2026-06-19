@@ -17,16 +17,29 @@ class User:
         email: str,
         password_hash: str,
         role: str,
+        user_id: int | None = None,
     ) -> None:
         """US01: cria um usuário validado.
 
         Pré-condição: os dados devem ser válidos e a senha já deve estar em hash.
         Pós-condição: o usuário é criado ou InvalidUserError é lançada.
         """
+        self.user_id = self._validate_user_id(user_id)
         self.name = self._validate_name(name)
         self.email = self._validate_email(email)
         self.password_hash = self._validate_password_hash(password_hash)
         self.role = self._validate_role(role)
+
+    @staticmethod
+    def _validate_user_id(user_id: int | None) -> int | None:
+        """US01: valida o identificador persistido do usuário."""
+        if user_id is None:
+            return None
+        if isinstance(user_id, bool) or not isinstance(user_id, int):
+            raise InvalidUserError(
+                "O identificador do usuário deve ser um número inteiro."
+            )
+        return user_id
 
     @staticmethod
     def _validate_name(name: str) -> str:

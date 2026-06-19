@@ -1,8 +1,12 @@
 """Casos de uso relacionados a usuários."""
 
-from werkzeug.security import generate_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 
-from app.domain.exceptions import DuplicateEmailError, InvalidUserError
+from app.domain.exceptions import (
+    DuplicateEmailError,
+    InvalidCredentialsError,
+    InvalidUserError,
+)
 from app.domain.user import User
 
 
@@ -44,6 +48,24 @@ class UserService:
             )
 
         self.user_repository.add_user(user)
+        return user
+
+    def authenticate_user(self, email: str, password: str) -> User:
+        """US01: autentica usuário por e-mail e senha.
+
+        Pré-condição: email e password devem ser as credenciais informadas.
+        Pós-condição: retorna o usuário ou lança InvalidCredentialsError.
+        """
+        if not isinstance(email, str) or not isinstance(password, str):
+            raise InvalidCredentialsError("E-mail ou senha inválidos.")
+
+        user = self.user_repository.get_user_by_email(email.strip().lower())
+        if user is None or not check_password_hash(
+            user.password_hash,
+            password,
+        ):
+            raise InvalidCredentialsError("E-mail ou senha inválidos.")
+
         return user
 
     @staticmethod

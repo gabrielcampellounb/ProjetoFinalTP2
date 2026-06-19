@@ -23,3 +23,7 @@ class InvalidUserError(Exception):
 
 class DuplicateEmailError(Exception):
     """Indica que o e-mail já está cadastrado."""
+
+
+class InvalidCredentialsError(Exception):
+    """Indica que as credenciais de autenticação são inválidas."""

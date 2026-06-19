@@ -48,7 +48,7 @@ class SQLiteUserRepository:
             )
 
         try:
-            self.connection.execute(
+            cursor = self.connection.execute(
                 """
                 INSERT INTO users (email, name, password_hash, role)
                 VALUES (?, ?, ?, ?);
@@ -61,6 +61,7 @@ class SQLiteUserRepository:
                 ),
             )
             self.connection.commit()
+            user.user_id = cursor.lastrowid
         except sqlite3.IntegrityError as error:
             raise DuplicateEmailError(
                 f"Já existe um usuário com o e-mail {user.email}."
@@ -74,7 +75,7 @@ class SQLiteUserRepository:
         """
         row = self.connection.execute(
             """
-            SELECT name, email, password_hash, role
+            SELECT rowid, name, email, password_hash, role
             FROM users
             WHERE email = ?;
             """,
@@ -85,8 +86,9 @@ class SQLiteUserRepository:
             return None
 
         return User(
-            name=row[0],
-            email=row[1],
-            password_hash=row[2],
-            role=row[3],
+            user_id=row[0],
+            name=row[1],
+            email=row[2],
+            password_hash=row[3],
+            role=row[4],
         )
