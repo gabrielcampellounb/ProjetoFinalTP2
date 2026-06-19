@@ -112,6 +112,27 @@ class SQLiteProductRepository:
 
         return [self._to_product_with_quantity(row) for row in rows]
 
+    def update_product(self, product: Product) -> None:
+        """AD02: persiste nome, marca e preço de um produto.
+
+        Pré-condição: product deve ser válido e já estar cadastrado.
+        Pós-condição: os dados editáveis são atualizados e confirmados.
+        """
+        self.connection.execute(
+            """
+            UPDATE products
+            SET name = ?, brand = ?, price = ?
+            WHERE bar_code = ?;
+            """,
+            (
+                product.name,
+                product.brand,
+                product.price,
+                product.bar_code,
+            ),
+        )
+        self.connection.commit()
+
     @staticmethod
     def _to_product_with_quantity(row) -> tuple[Product, int]:
         """US02: converte uma linha SQLite em produto e quantidade."""

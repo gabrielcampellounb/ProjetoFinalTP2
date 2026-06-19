@@ -9,13 +9,14 @@ from app.domain.exceptions import (
     DuplicateBarcodeError,
     InvalidProductError,
     InvalidQuantityError,
+    ProductNotFoundError,
 )
 from app.web.dependencies import initialize_product_service
 from app.web.routes import create_product_blueprint
 
 
 def create_app(connection: sqlite3.Connection) -> Flask:
-    """AD01/US02: cria a aplicação Flask para cadastro e busca.
+    """AD01/US02/AD02: cria a aplicação Flask para produtos.
 
     Pré-condição: connection deve ser uma conexão SQLite aberta.
     Pós-condição: retorna a aplicação com as rotas de produtos configuradas.
@@ -32,7 +33,7 @@ def create_app(connection: sqlite3.Connection) -> Flask:
 
 
 def _register_error_handlers(flask_app: Flask) -> None:
-    """AD01: registra respostas HTTP para erros do cadastro de produtos."""
+    """AD01/AD02: registra respostas HTTP para erros de produtos."""
 
     @flask_app.errorhandler(InvalidProductError)
     @flask_app.errorhandler(InvalidQuantityError)
@@ -42,6 +43,10 @@ def _register_error_handlers(flask_app: Flask) -> None:
     @flask_app.errorhandler(DuplicateBarcodeError)
     def handle_duplicate_bar_code(error):
         return jsonify({"erro": str(error)}), 409
+
+    @flask_app.errorhandler(ProductNotFoundError)
+    def handle_product_not_found(error):
+        return jsonify({"erro": str(error)}), 404
 
     @flask_app.errorhandler(BadRequest)
     def handle_bad_request(error):
