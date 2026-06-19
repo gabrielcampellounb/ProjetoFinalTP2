@@ -27,3 +27,7 @@ class DuplicateEmailError(Exception):
 
 class InvalidCredentialsError(Exception):
     """Indica que as credenciais de autenticação são inválidas."""
+
+
+class InvalidShoppingListError(Exception):
+    """Indica que uma lista de compras viola uma pré-condição."""

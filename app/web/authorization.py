@@ -5,6 +5,23 @@ from functools import wraps
 from flask import jsonify, session
 
 
+def authenticated_required(view_function):
+    """US03: exige uma sessão de usuário autenticado.
+
+    Pré-condição: a função decorada deve ser uma view Flask.
+    Pós-condição: executa a view ou retorna HTTP 401.
+    """
+
+    @wraps(view_function)
+    def authenticated_view(*args, **kwargs):
+        if "user_id" not in session:
+            return jsonify({"erro": "Autenticação necessária."}), 401
+
+        return view_function(*args, **kwargs)
+
+    return authenticated_view
+
+
 def admin_required(view_function):
     """RNF02: exige uma sessão autenticada com papel de administrador.
 

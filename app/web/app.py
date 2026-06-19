@@ -12,19 +12,22 @@ from app.domain.exceptions import (
     InvalidCredentialsError,
     InvalidProductError,
     InvalidQuantityError,
+    InvalidShoppingListError,
     InvalidUserError,
     ProductNotFoundError,
 )
 from app.web.auth_routes import create_auth_blueprint
 from app.web.dependencies import (
     initialize_product_service,
+    initialize_shopping_list_service,
     initialize_user_service,
 )
 from app.web.routes import create_product_blueprint
+from app.web.shopping_list_routes import create_shopping_list_blueprint
 
 
 def create_app(connection: sqlite3.Connection) -> Flask:
-    """AD01/US01/US02/AD02/AD03/RNF02: cria a aplicação Flask.
+    """AD01/US01/US02/US03/AD02/AD03/RNF02: cria a aplicação Flask.
 
     Pré-condição: connection deve ser uma conexão SQLite aberta.
     Pós-condição: retorna a aplicação com autenticação e autorização.
@@ -36,11 +39,15 @@ def create_app(connection: sqlite3.Connection) -> Flask:
     )
     product_service = initialize_product_service(connection)
     user_service = initialize_user_service(connection)
+    shopping_list_service = initialize_shopping_list_service(connection)
 
     flask_app.register_blueprint(
         create_product_blueprint(product_service)
     )
     flask_app.register_blueprint(create_auth_blueprint(user_service))
+    flask_app.register_blueprint(
+        create_shopping_list_blueprint(shopping_list_service)
+    )
     _register_error_handlers(flask_app)
 
     return flask_app
@@ -51,6 +58,7 @@ def _register_error_handlers(flask_app: Flask) -> None:
 
     @flask_app.errorhandler(InvalidProductError)
     @flask_app.errorhandler(InvalidQuantityError)
+    @flask_app.errorhandler(InvalidShoppingListError)
     @flask_app.errorhandler(InvalidUserError)
     def handle_validation_error(error):
         return jsonify({"erro": str(error)}), 400
