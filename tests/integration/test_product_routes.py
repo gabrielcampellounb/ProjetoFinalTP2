@@ -5,18 +5,63 @@ from app.web.app import create_app
 
 
 class TestProductRoutes(unittest.TestCase):
-    """Testa as estórias AD01, US02, AD02 e AD03 pela API Flask."""
+    """Testa AD01, US02, AD02, AD03 e autorização RNF02."""
 
     def setUp(self):
         self.conn = sqlite3.connect(":memory:")
         self.app = create_app(self.conn)
         self.client = self.app.test_client()
+        self.authenticate_as("admin")
 
     def tearDown(self):
         self.conn.close()
 
+    def authenticate_as(self, role):
+        """RNF02: configura uma sessão autenticada para os testes."""
+        with self.client.session_transaction() as flask_session:
+            flask_session.clear()
+            flask_session["user_id"] = 1
+            flask_session["role"] = role
+
+    def clear_session(self):
+        """RNF02: remove a autenticação da sessão de teste."""
+        with self.client.session_transaction() as flask_session:
+            flask_session.clear()
+
+    @staticmethod
+    def protected_requests():
+        """RNF02: retorna exemplos das quatro operações administrativas."""
+        return (
+            (
+                "POST",
+                "/products",
+                {
+                    "name": "Arroz",
+                    "brand": "Tio João",
+                    "price": 25.90,
+                    "bar_code": "1234567890123",
+                    "quantity": 10,
+                },
+            ),
+            (
+                "PUT",
+                "/products/1234567890123",
+                {
+                    "name": "Arroz Integral",
+                    "brand": "Tio João",
+                    "price": 30.50,
+                },
+            ),
+            ("DELETE", "/products/1234567890123", None),
+            (
+                "PATCH",
+                "/products/1234567890123/stock",
+                {"quantity": 20},
+            ),
+        )
+
     def test_ad01_create_product_route(self):
-        """AD01: produto válido deve retornar HTTP 201 e todos os campos."""
+        """AD01/RNF02: admin deve cadastrar produto e receber HTTP 201."""
         response = self.client.post(
             "/products",
             json={
@@ -38,7 +83,7 @@ class TestProductRoutes(unittest.TestCase):
         self.assertEqual(data["quantity"], 10)
 
     def test_ad01_reject_duplicate_bar_code_route(self):
-        """AD01: código de barras duplicado deve retornar HTTP 409."""
+        """AD01/RNF02: admin recebe 409 para código de barras duplicado."""
         payload = {
             "name": "Arroz",
             "brand": "Tio João",
@@ -57,7 +102,7 @@ class TestProductRoutes(unittest.TestCase):
         )
 
     def test_ad01_reject_invalid_product_route(self):
-        """AD01: dados inválidos devem retornar HTTP 400."""
+        """AD01/RNF02: dados inválidos do admin devem retornar HTTP 400."""
         response = self.client.post(
             "/products",
             json={
@@ -76,7 +121,7 @@ class TestProductRoutes(unittest.TestCase):
         )
 
     def test_ad01_reject_missing_field_route(self):
-        """AD01: campo obrigatório ausente deve retornar HTTP 400."""
+        """AD01/RNF02: campo ausente do admin deve retornar HTTP 400."""
         response = self.client.post(
             "/products",
             json={
@@ -94,7 +139,7 @@ class TestProductRoutes(unittest.TestCase):
         )
 
     def test_us02_search_products_route(self):
-        """US02: GET /products deve buscar por parte do nome."""
+        """US02/RNF02: GET público deve buscar por parte do nome."""
         self.client.post(
             "/products",
             json={
@@ -133,7 +178,7 @@ class TestProductRoutes(unittest.TestCase):
         )
 
     def test_us02_search_products_by_brand_route(self):
-        """US02: GET /products deve buscar por parte da marca."""
+        """US02/RNF02: GET público deve buscar por parte da marca."""
         self.client.post(
             "/products",
             json={
@@ -151,21 +196,21 @@ class TestProductRoutes(unittest.TestCase):
         self.assertEqual(response.get_json()[0]["brand"], "Camil Alimentos")
 
     def test_us02_search_without_results_returns_empty_list(self):
-        """US02: busca sem resultado deve retornar lista vazia e HTTP 200."""
+        """US02/RNF02: busca pública sem resultado retorna lista vazia."""
         response = self.client.get("/products?q=inexistente")
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json(), [])
 
     def test_us02_empty_query_returns_empty_list(self):
-        """US02: query vazia deve retornar lista vazia e HTTP 200."""
+        """US02/RNF02: query pública vazia deve retornar lista vazia."""
         response = self.client.get("/products?q=")
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json(), [])
 
     def test_ad02_update_existing_product_route(self):
-        """AD02: PUT deve editar produto existente e retornar HTTP 200."""
+        """AD02/RNF02: admin deve editar produto e receber HTTP 200."""
         self.client.post(
             "/products",
             json={
@@ -199,7 +244,7 @@ class TestProductRoutes(unittest.TestCase):
         )
 
     def test_ad02_update_missing_product_route(self):
-        """AD02: edição de produto inexistente deve retornar HTTP 404."""
+        """AD02/RNF02: admin recebe 404 ao editar produto inexistente."""
         response = self.client.put(
             "/products/9999999999999",
             json={
@@ -216,7 +261,7 @@ class TestProductRoutes(unittest.TestCase):
         )
 
     def test_ad02_reject_invalid_update_route(self):
-        """AD02: dados inválidos na edição devem retornar HTTP 400."""
+        """AD02/RNF02: edição inválida do admin deve retornar HTTP 400."""
         self.client.post(
             "/products",
             json={
@@ -250,7 +295,7 @@ class TestProductRoutes(unittest.TestCase):
         self.assertEqual(stored_product, ("Arroz", "Tio João", 25.90))
 
     def test_ad02_deactivate_existing_product_route(self):
-        """AD02: DELETE deve desativar produto e retornar HTTP 204."""
+        """AD02/RNF02: admin deve desativar produto e receber HTTP 204."""
         self.client.post(
             "/products",
             json={
@@ -280,7 +325,7 @@ class TestProductRoutes(unittest.TestCase):
         self.assertEqual(stored_row, (0,))
 
     def test_ad02_deactivate_missing_product_route(self):
-        """AD02: remoção de produto inexistente deve retornar HTTP 404."""
+        """AD02/RNF02: admin recebe 404 ao remover produto inexistente."""
         response = self.client.delete("/products/9999999999999")
 
         self.assertEqual(response.status_code, 404)
@@ -290,7 +335,7 @@ class TestProductRoutes(unittest.TestCase):
         )
 
     def test_ad03_update_existing_product_stock_route(self):
-        """AD03: PATCH deve atualizar estoque e retornar HTTP 200."""
+        """AD03/RNF02: admin deve atualizar estoque e receber HTTP 200."""
         self.client.post(
             "/products",
             json={
@@ -313,7 +358,7 @@ class TestProductRoutes(unittest.TestCase):
         self.assertEqual(search_response.get_json()[0]["quantity"], 20)
 
     def test_ad03_reject_negative_stock_route(self):
-        """AD03: quantidade negativa deve retornar HTTP 400."""
+        """AD03/RNF02: estoque inválido do admin deve retornar HTTP 400."""
         self.client.post(
             "/products",
             json={
@@ -342,7 +387,7 @@ class TestProductRoutes(unittest.TestCase):
         self.assertEqual(stored_quantity, 8)
 
     def test_ad03_reject_stock_update_for_missing_product_route(self):
-        """AD03: estoque de produto inexistente deve retornar HTTP 404."""
+        """AD03/RNF02: admin recebe 404 para estoque de produto ausente."""
         response = self.client.patch(
             "/products/9999999999999/stock",
             json={"quantity": 20},
@@ -353,3 +398,58 @@ class TestProductRoutes(unittest.TestCase):
             response.get_json()["erro"],
             "Produto com o código de barras 9999999999999 não encontrado.",
         )
+
+    def test_rnf02_reject_unauthenticated_admin_routes(self):
+        """AD01/AD02/AD03/RNF02: visitante recebe 401 nas rotas admin."""
+        self.clear_session()
+
+        for method, path, payload in self.protected_requests():
+            with self.subTest(method=method, path=path):
+                response = self.client.open(
+                    path,
+                    method=method,
+                    json=payload,
+                )
+
+                self.assertEqual(response.status_code, 401)
+                self.assertEqual(
+                    response.get_json()["erro"],
+                    "Autenticação necessária.",
+                )
+
+    def test_rnf02_reject_common_user_on_admin_routes(self):
+        """AD01/AD02/AD03/RNF02: usuário comum recebe 403 nas rotas admin."""
+        self.authenticate_as("user")
+
+        for method, path, payload in self.protected_requests():
+            with self.subTest(method=method, path=path):
+                response = self.client.open(
+                    path,
+                    method=method,
+                    json=payload,
+                )
+
+                self.assertEqual(response.status_code, 403)
+                self.assertEqual(
+                    response.get_json()["erro"],
+                    "Acesso permitido apenas para administradores.",
+                )
+
+    def test_us02_rnf02_product_search_remains_public(self):
+        """US02/RNF02: visitante deve continuar acessando GET /products."""
+        self.client.post(
+            "/products",
+            json={
+                "name": "Arroz Integral",
+                "brand": "Tio João",
+                "price": 12.50,
+                "bar_code": "1234567890444",
+                "quantity": 8,
+            },
+        )
+        self.clear_session()
+
+        response = self.client.get("/products?q=arroz")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json()[0]["name"], "Arroz Integral")
