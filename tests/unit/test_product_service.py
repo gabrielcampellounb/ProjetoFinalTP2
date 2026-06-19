@@ -5,16 +5,13 @@ from app.domain.exceptions import DuplicateBarcodeError
 
 class FakeProductRepository:
     def __init__(self):
-        self.products = []
+        self.products = dict() 
 
-    def add_product(self, product):
-        self.products.append(product)
+    def add_product(self, product, quantity):
+        self.products[product.bar_code] = (product, quantity)
 
     def get_product_by_bar_code(self, bar_code):
-        for product in self.products:
-            if product.bar_code == bar_code:
-                return product
-        return None
+        return self.products.get(bar_code)
 
 class TestProductService(unittest.TestCase):
     def setUp(self):
@@ -25,7 +22,8 @@ class TestProductService(unittest.TestCase):
             name="Test Product", 
             brand="Test Brand",
             price=10.0,
-            bar_code="1234567890"
+            bar_code="1234567890111",
+            quantity=5
         )
 
     def test_if_product_is_saved(self):
@@ -36,9 +34,10 @@ class TestProductService(unittest.TestCase):
         self.assertEqual(self.product.name, "Test Product")
         self.assertEqual(self.product.brand, "Test Brand")
         self.assertEqual(self.product.price, 10.0)
-        self.assertEqual(self.product.bar_code, "1234567890")
+        self.assertEqual(self.product.bar_code, "1234567890111")
 
         self.assertEqual(len(self.repository.products), 1)
+        self.assertEqual(self.repository.products["1234567890111"][1], 5)
 
     def test_reject_duplicate_bar_code(self):
         """Ensure that creating a product 
@@ -48,8 +47,6 @@ class TestProductService(unittest.TestCase):
                 name="Another Product", 
                 brand="Another Brand",
                 price=20.0,
-                bar_code="1234567890"
+                bar_code="1234567890111",
+                quantity=5
             )
-
-    
-        
