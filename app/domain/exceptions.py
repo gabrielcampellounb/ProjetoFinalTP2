@@ -1,14 +1,13 @@
+"""Exceções específicas das regras de produtos."""
+
+
 class InvalidProductError(Exception):
-    """Custom exception for invalid product attributes."""
-    def __init__(self, message):
-        super().__init__(message)
+    """Indica que um atributo viola uma pré-condição do produto."""
+
 
 class DuplicateBarcodeError(Exception):
-    """Custom exception for duplicate bar code errors."""
-    def __init__(self, message):
-        super().__init__(message)
+    """Indica que o código de barras já está cadastrado."""
+
 
 class ProductNotFoundError(Exception):
-    """Custom exception for product not found errors."""
-    def __init__(self, message):
-        super().__init__(message)
+    """Indica que o produto solicitado não foi encontrado."""
