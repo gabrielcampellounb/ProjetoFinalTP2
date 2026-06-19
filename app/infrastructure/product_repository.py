@@ -94,3 +94,36 @@ class SQLiteProductRepository:
             bar_code=row[0],
         )
         return product, row[4]
+
+    def search_products_by_text(
+        self,
+        query: str,
+    ) -> list[tuple[Product, int]]:
+        """US02: busca produtos por parte do nome ou da marca.
+
+        Pré-condição: query deve conter um texto não vazio.
+        Pós-condição: retorna produtos compatíveis ou lista vazia.
+        """
+        search_pattern = f"%{query}%"
+        rows = self.connection.execute(
+            """
+            SELECT bar_code, name, brand, price, quantity
+            FROM products
+            WHERE name LIKE ? COLLATE NOCASE
+               OR brand LIKE ? COLLATE NOCASE
+            ORDER BY name, bar_code;
+            """,
+            (search_pattern, search_pattern),
+        ).fetchall()
+
+        results = []
+        for row in rows:
+            product = Product(
+                name=row[1],
+                brand=row[2],
+                price=row[3],
+                bar_code=row[0],
+            )
+            results.append((product, row[4]))
+
+        return results

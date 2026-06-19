@@ -15,10 +15,10 @@ from app.web.routes import create_product_blueprint
 
 
 def create_app(connection: sqlite3.Connection) -> Flask:
-    """AD01: cria e configura a aplicação Flask para cadastro de produtos.
+    """AD01/US02: cria a aplicação Flask para cadastro e busca.
 
     Pré-condição: connection deve ser uma conexão SQLite aberta.
-    Pós-condição: retorna a aplicação com a rota POST /products configurada.
+    Pós-condição: retorna a aplicação com as rotas de produtos configuradas.
     """
     flask_app = Flask(__name__)
     product_service = initialize_product_service(connection)

@@ -9,7 +9,7 @@ from app.infrastructure.product_repository import SQLiteProductRepository
 def initialize_product_service(
     connection: sqlite3.Connection,
 ) -> ProductService:
-    """AD01: inicializa as dependências do cadastro de produtos.
+    """AD01/US02: inicializa as dependências dos casos de uso de produtos.
 
     Pré-condição: connection deve ser uma conexão SQLite aberta.
     Pós-condição: retorna o serviço com tabela e repositório configurados.

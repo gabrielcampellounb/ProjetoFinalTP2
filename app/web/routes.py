@@ -41,4 +41,27 @@ def create_product_blueprint(
             }
         ), 201
 
+    @blueprint.get("/products")
+    def search_products():
+        """US02: busca produtos por nome ou marca.
+
+        Pré-condição: o parâmetro opcional q contém o texto da busca.
+        Pós-condição: retorna uma lista JSON e HTTP 200.
+        """
+        query = request.args.get("q", "")
+        results = product_service.search_products(query)
+
+        return jsonify(
+            [
+                {
+                    "name": product.name,
+                    "brand": product.brand,
+                    "price": product.price,
+                    "bar_code": product.bar_code,
+                    "quantity": quantity,
+                }
+                for product, quantity in results
+            ]
+        ), 200
+
     return blueprint

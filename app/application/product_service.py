@@ -45,3 +45,17 @@ class ProductService:
         )
         self.product_repository.add_product(product, quantity)
         return product
+
+    def search_products(
+        self,
+        query: str,
+    ) -> list[tuple[Product, int]]:
+        """US02: busca produtos por texto parcial no catálogo.
+
+        Pré-condição: query deve conter o texto informado pelo usuário.
+        Pós-condição: retorna produtos compatíveis ou lista vazia.
+        """
+        if not isinstance(query, str) or not query.strip():
+            return []
+
+        return self.product_repository.search_products_by_text(query.strip())
