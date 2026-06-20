@@ -23,6 +23,19 @@ class TestUS03ShoppingList(unittest.TestCase):
         self.assertEqual(shopping_list.user_id, 7)
         self.assertEqual(shopping_list.name, "Compras da semana")
         self.assertEqual(shopping_list.created_at, created_at)
+        self.assertFalse(shopping_list.favorite)
+
+    def test_us03_create_favorite_shopping_list(self):
+        """US03: deve aceitar uma lista marcada como favorita."""
+        shopping_list = ShoppingList(
+            list_id=10,
+            user_id=7,
+            name="Lista favorita",
+            created_at=datetime.now(timezone.utc),
+            favorite=True,
+        )
+
+        self.assertTrue(shopping_list.favorite)
 
     def test_us03_reject_empty_name(self):
         """US03: deve rejeitar nome vazio ou composto por espaços."""

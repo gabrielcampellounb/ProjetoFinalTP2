@@ -31,6 +31,18 @@ class FakeShoppingListRepository:
             None,
         )
 
+    def list_shopping_lists_by_user(self, user_id):
+        return [
+            shopping_list
+            for shopping_list in self.shopping_lists
+            if shopping_list.user_id == user_id
+        ]
+
+    def set_favorite(self, user_id, list_id):
+        for shopping_list in self.shopping_lists:
+            if shopping_list.user_id == user_id:
+                shopping_list.favorite = shopping_list.list_id == list_id
+
     def add_item(self, item):
         self.items[(item.list_id, item.bar_code)] = item
 
@@ -97,6 +109,32 @@ class TestUS03ShoppingListService(unittest.TestCase):
             self.service.create_shopping_list(user_id=7, name=" ")
 
         self.assertEqual(self.repository.shopping_lists, [])
+
+    def test_us03_mark_owned_list_as_unique_favorite(self):
+        """US03: favoritar uma lista deve desfavoritar a anterior."""
+        first = self.service.create_shopping_list(7, "Lista anterior")
+        second = self.service.create_shopping_list(7, "Lista nova")
+        self.service.mark_as_favorite(7, first.list_id)
+
+        favorite = self.service.mark_as_favorite(7, second.list_id)
+
+        self.assertFalse(first.favorite)
+        self.assertTrue(second.favorite)
+        self.assertIs(favorite, second)
+
+    def test_us03_list_only_users_shopping_lists(self):
+        """US03: deve listar apenas listas pertencentes ao usuário."""
+        owned = self.service.create_shopping_list(7, "Minha lista")
+        self.service.create_shopping_list(8, "Lista de outro usuário")
+
+        self.assertEqual(self.service.list_shopping_lists(7), [owned])
+
+    def test_us03_reject_favorite_list_from_another_user(self):
+        """US03: usuário não deve favoritar lista de outra pessoa."""
+        shopping_list = self.service.create_shopping_list(7, "Minha lista")
+
+        with self.assertRaises(ShoppingListNotFoundError):
+            self.service.mark_as_favorite(8, shopping_list.list_id)
 
     def create_list_and_product(self):
         """US03: prepara lista e produto válidos para testes de itens."""

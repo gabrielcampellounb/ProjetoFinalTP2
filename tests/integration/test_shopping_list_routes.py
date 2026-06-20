@@ -61,6 +61,7 @@ class TestUS03ShoppingListRoutes(unittest.TestCase):
         self.assertEqual(data["user_id"], 7)
         self.assertEqual(data["name"], "Compras da semana")
         self.assertIsInstance(data["created_at"], str)
+        self.assertFalse(data["favorite"])
 
         stored_user_id = self.connection.execute(
             """
@@ -136,6 +137,44 @@ class TestUS03ShoppingListRoutes(unittest.TestCase):
         )
 
         self.assertEqual(response.status_code, 404)
+
+    def test_us03_mark_shopping_list_as_favorite_route(self):
+        """US03: usuário deve favoritar sua lista pela API."""
+        list_id = self.create_list_for_user(user_id=7)
+
+        response = self.client.patch(
+            f"/shopping-lists/{list_id}/favorite"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.get_json()["favorite"])
+
+    def test_us03_favorite_shopping_list_html_flow(self):
+        """US03/WEB: usuário deve criar e favoritar lista pela interface."""
+        self.authenticate_user(user_id=7)
+
+        create_response = self.client.post(
+            "/shopping-lists/view",
+            data={"name": "Compras favoritas"},
+        )
+        list_id = self.connection.execute(
+            """
+            SELECT id
+            FROM shopping_lists
+            WHERE user_id = 7 AND name = 'Compras favoritas';
+            """
+        ).fetchone()[0]
+        favorite_response = self.client.post(
+            f"/shopping-lists/{list_id}/favorite/view"
+        )
+        page_response = self.client.get("/shopping-lists/view")
+
+        self.assertEqual(create_response.status_code, 302)
+        self.assertEqual(favorite_response.status_code, 302)
+        html = page_response.get_data(as_text=True)
+        self.assertIn("Minhas listas", html)
+        self.assertIn("Compras favoritas", html)
+        self.assertIn("Lista favorita", html)
 
     def test_us03_reject_non_positive_quantity_route(self):
         """US03: quantidade menor ou igual a zero deve retornar HTTP 400."""

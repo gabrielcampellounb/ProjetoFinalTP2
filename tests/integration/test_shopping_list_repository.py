@@ -36,6 +36,58 @@ class TestUS03SQLiteShoppingListRepository(unittest.TestCase):
         self.assertEqual(stored_list.user_id, 7)
         self.assertEqual(stored_list.name, "Compras da semana")
         self.assertEqual(stored_list.created_at, created_at)
+        self.assertFalse(stored_list.favorite)
+
+    def test_us03_set_unique_favorite_and_list_by_user(self):
+        """US03: SQLite deve manter uma favorita por usuário."""
+        first = self.create_persisted_list()
+        second = ShoppingList(
+            list_id=None,
+            user_id=7,
+            name="Lista mensal",
+            created_at=datetime.now(timezone.utc),
+        )
+        other_user = ShoppingList(
+            list_id=None,
+            user_id=8,
+            name="Outra lista",
+            created_at=datetime.now(timezone.utc),
+        )
+        self.repository.add_shopping_list(second)
+        self.repository.add_shopping_list(other_user)
+        self.repository.set_favorite(7, first.list_id)
+        self.repository.set_favorite(7, second.list_id)
+
+        lists = self.repository.list_shopping_lists_by_user(7)
+
+        self.assertEqual(len(lists), 2)
+        self.assertFalse(lists[0].favorite)
+        self.assertTrue(lists[1].favorite)
+
+    def test_us03_create_table_migrates_favorite_column(self):
+        """US03: banco anterior deve receber favorite com padrão zero."""
+        connection = sqlite3.connect(":memory:")
+        connection.execute(
+            """
+            CREATE TABLE shopping_lists (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                name TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            );
+            """
+        )
+        repository = SQLiteShoppingListRepository(connection)
+
+        repository.create_table()
+
+        columns = {
+            row[1] for row in connection.execute(
+                "PRAGMA table_info(shopping_lists);"
+            ).fetchall()
+        }
+        self.assertIn("favorite", columns)
+        connection.close()
 
     def create_persisted_list(self):
         """US03: cria e persiste uma lista para testes de itens."""
