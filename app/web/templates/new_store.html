@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Cadastrar loja | Compra Certa{% endblock %}
+
+{% block content %}
+  <h1>Cadastrar loja</h1>
+  <form method="post" action="{{ url_for('html.new_store_page') }}">
+    <label for="name">Nome</label>
+    <input id="name" name="name" required>
+    <label for="address">Endereço</label>
+    <input id="address" name="address" required>
+    <label for="observation">Observação</label>
+    <input id="observation" name="observation">
+    <button type="submit">Cadastrar loja</button>
+  </form>
+{% endblock %}

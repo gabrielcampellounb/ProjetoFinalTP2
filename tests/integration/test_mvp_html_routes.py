@@ -137,9 +137,7 @@ class TestWEBMvpHtmlRoutes(unittest.TestCase):
 
         self.assertEqual(response.status_code, 302)
         self.assertTrue(
-            response.headers["Location"].endswith(
-                "/products/1234567890444/view"
-            )
+            response.headers["Location"].endswith("/products/1234567890444/view")
         )
         stored_price = self.connection.execute(
             """
@@ -201,9 +199,7 @@ class TestWEBMvpHtmlRoutes(unittest.TestCase):
             data={"quantity": "4"},
         )
         cart_response = self.client.get("/cart/view")
-        remove_response = self.client.post(
-            "/cart/view/items/1234567890444/remove"
-        )
+        remove_response = self.client.post("/cart/view/items/1234567890444/remove")
 
         self.assertEqual(add_response.status_code, 302)
         self.assertEqual(update_response.status_code, 302)

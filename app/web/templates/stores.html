@@ -12,6 +12,9 @@
         {% if store.observation %}
           <p class="muted">{{ store.observation }}</p>
         {% endif %}
+        <a href="{{ url_for('html.products_page', store_id=store.store_id) }}">
+          Ver produtos desta loja
+        </a>
       </article>
     {% else %}
       <p class="empty">Nenhum local cadastrado.</p>

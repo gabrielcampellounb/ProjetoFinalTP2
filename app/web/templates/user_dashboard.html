@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Meu painel | Compra Certa{% endblock %}
+
+{% block content %}
+  <h1>Meu painel</h1>
+  <div class="grid">
+    <article class="card">
+      <h2>Explorar produtos</h2>
+      <p>Pesquise e compare preços por loja.</p>
+      <a href="{{ url_for('html.products_page') }}">Abrir catálogo</a>
+    </article>
+    <article class="card">
+      <h2>Locais de compra</h2>
+      <p>{{ store_count }} local(is) disponível(is).</p>
+      <a href="{{ url_for('html.stores_page') }}">Ver lojas</a>
+    </article>
+    <article class="card">
+      <h2>Carrinho</h2>
+      <p>{{ cart_count }} item(ns) planejado(s).</p>
+      <a href="{{ url_for('html.cart_page') }}">Ver carrinho</a>
+    </article>
+  </div>
+{% endblock %}

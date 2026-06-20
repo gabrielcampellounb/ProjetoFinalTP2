@@ -94,6 +94,9 @@
           {% if session.get("role") == "admin" %}
             <a href="{{ url_for('html.admin_dashboard') }}">Painel administrativo</a>
             <a href="{{ url_for('html.new_product_page') }}">Cadastrar produto</a>
+            <a href="{{ url_for('html.new_store_page') }}">Cadastrar loja</a>
+          {% else %}
+            <a href="{{ url_for('html.user_dashboard') }}">Meu painel</a>
           {% endif %}
           <span class="muted">Perfil: {{ session.get("role") }}</span>
           <form
@@ -105,6 +108,7 @@
           </form>
         {% else %}
           <a href="{{ url_for('html.login_page') }}">Entrar</a>
+          <a href="{{ url_for('html.register_page') }}">Criar conta</a>
         {% endif %}
       </nav>
     </header>

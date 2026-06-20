@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Criar conta | Compra Certa{% endblock %}
+
+{% block content %}
+  <section class="card">
+    <h1>Criar conta</h1>
+    {% if error %}<p role="alert">{{ error }}</p>{% endif %}
+    <form method="post" action="{{ url_for('html.register_page') }}">
+      <label for="name">Nome</label>
+      <input id="name" name="name" autocomplete="name" required>
+      <label for="email">E-mail</label>
+      <input id="email" name="email" type="email" autocomplete="email" required>
+      <label for="password">Senha</label>
+      <input
+        id="password"
+        name="password"
+        type="password"
+        autocomplete="new-password"
+        required
+      >
+      <button type="submit">Criar conta</button>
+    </form>
+  </section>
+{% endblock %}

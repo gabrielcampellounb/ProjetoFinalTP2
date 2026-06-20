@@ -8,8 +8,25 @@
   <form method="get" action="{{ url_for('html.products_page') }}">
     <label for="q">Buscar por nome ou marca</label>
     <input id="q" name="q" value="{{ query }}" placeholder="Ex.: arroz">
+    <label for="store_id">Filtrar por loja ou local</label>
+    <select id="store_id" name="store_id">
+      <option value="">Todas as lojas</option>
+      {% for store in stores %}
+        <option
+          value="{{ store.store_id }}"
+          {% if store_id == store.store_id %}selected{% endif %}
+        >
+          {{ store.name }} — {{ store.address }}
+        </option>
+      {% endfor %}
+    </select>
     <button type="submit">Buscar</button>
   </form>
+
+  {% if selected_store %}
+    <h2>{{ selected_store.name }}</h2>
+    <p class="muted">{{ selected_store.address }}</p>
+  {% endif %}
 
   {% if query %}
     <h2>Resultados para “{{ query }}”</h2>
@@ -24,7 +41,9 @@
             <th>Nome</th>
             <th>Marca</th>
             <th>Preço base</th>
+            {% if selected_store %}<th>Preço na loja</th>{% endif %}
             <th>Estoque</th>
+            <th>Ações</th>
           </tr>
         </thead>
         <tbody>
@@ -33,7 +52,21 @@
               <td>{{ product.name }}</td>
               <td>{{ product.brand }}</td>
               <td>R$ {{ "%.2f"|format(product.price) }}</td>
+              {% if selected_store %}
+                <td>R$ {{ "%.2f"|format(observed_prices[product.bar_code]) }}</td>
+              {% endif %}
               <td>{{ quantity }}</td>
+              <td>
+                {% if session.get("user_id") %}
+                  <a
+                    href="{{ url_for('html.product_detail_page', bar_code=product.bar_code) }}"
+                  >
+                    Ver detalhes
+                  </a>
+                {% else %}
+                  <a href="{{ url_for('html.login_page') }}">Entrar para comprar</a>
+                {% endif %}
+              </td>
             </tr>
           {% endfor %}
         </tbody>
@@ -45,11 +78,19 @@
 
   <nav class="pagination" aria-label="Paginação do catálogo">
     {% if page > 1 %}
-      <a href="{{ url_for('html.products_page', q=query, page=page - 1) }}">Anterior</a>
+      <a
+        href="{{ url_for('html.products_page', q=query, store_id=store_id, page=page - 1) }}"
+      >
+        Anterior
+      </a>
     {% endif %}
     <span>Página {{ page }} de {{ total_pages }}</span>
     {% if page < total_pages %}
-      <a href="{{ url_for('html.products_page', q=query, page=page + 1) }}">Próxima</a>
+      <a
+        href="{{ url_for('html.products_page', q=query, store_id=store_id, page=page + 1) }}"
+      >
+        Próxima
+      </a>
     {% endif %}
   </nav>
 {% endblock %}

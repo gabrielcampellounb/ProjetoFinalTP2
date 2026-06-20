@@ -13,6 +13,7 @@
           <th>Marca</th>
           <th>Quantidade</th>
           <th>Subtotal</th>
+          <th>Ações</th>
         </tr>
       </thead>
       <tbody>
@@ -22,6 +23,30 @@
             <td>{{ product.brand }}</td>
             <td>{{ quantity }}</td>
             <td>R$ {{ "%.2f"|format(product.price * quantity) }}</td>
+            <td>
+              <form
+                method="post"
+                action="{{ url_for('html.update_cart_item_page', bar_code=product.bar_code) }}"
+              >
+                <label>
+                  Nova quantidade
+                  <input
+                    name="quantity"
+                    type="number"
+                    min="1"
+                    value="{{ quantity }}"
+                    required
+                  >
+                </label>
+                <button type="submit">Atualizar</button>
+              </form>
+              <form
+                method="post"
+                action="{{ url_for('html.remove_cart_item_page', bar_code=product.bar_code) }}"
+              >
+                <button type="submit">Remover</button>
+              </form>
+            </td>
           </tr>
         {% endfor %}
       </tbody>

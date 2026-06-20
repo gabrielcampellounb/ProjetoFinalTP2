@@ -1,11 +1,16 @@
 """População idempotente do banco usado na demonstração local."""
 
 import sqlite3
+from datetime import datetime
 from pathlib import Path
 
 from app.application.store_service import StoreService
 from app.application.user_service import UserService
 from app.domain.product import Product
+from app.domain.product_price import ProductPrice
+from app.infrastructure.product_price_repository import (
+    SQLiteProductPriceRepository,
+)
 from app.infrastructure.product_repository import SQLiteProductRepository
 from app.infrastructure.store_repository import SQLiteStoreRepository
 from app.infrastructure.user_repository import SQLiteUserRepository
@@ -86,16 +91,25 @@ def seed_demo_data(connection: sqlite3.Connection) -> dict[str, int]:
     user_repository.create_table()
     store_repository = SQLiteStoreRepository(connection)
     store_repository.create_table()
+    price_repository = SQLiteProductPriceRepository(connection)
+    price_repository.create_table()
     user_service = UserService(user_repository)
     store_service = StoreService(store_repository)
 
     users_created = _seed_users(user_service, user_repository)
     stores_created = _seed_stores(store_service, store_repository)
     products_created = _seed_products(product_repository)
+    prices_created = _seed_prices(
+        product_repository,
+        store_repository,
+        user_repository,
+        price_repository,
+    )
     return {
         "users_created": users_created,
         "stores_created": stores_created,
         "products_created": products_created,
+        "prices_created": prices_created,
     }
 
 
@@ -180,11 +194,47 @@ def _demo_product_rows():
         )
 
 
+def _seed_prices(
+    product_repository,
+    store_repository,
+    user_repository,
+    price_repository,
+) -> int:
+    """DEMO: vincula cada produto a uma loja com preço observado."""
+    stores = store_repository.list_stores()
+    user = user_repository.get_user_by_email("usuario@example.com")
+    if not stores or user is None:
+        return 0
+
+    existing_keys = price_repository.list_price_keys()
+    created_at = datetime(2026, 1, 1, 12, 0)
+    missing_prices = []
+    for index, (product, _) in enumerate(product_repository.list_active_products()):
+        store = stores[index % len(stores)]
+        key = (product.bar_code, store.store_id)
+        if key in existing_keys:
+            continue
+        discount = 3 + (index % 12)
+        missing_prices.append(
+            ProductPrice(
+                product_bar_code=product.bar_code,
+                store_id=store.store_id,
+                user_id=user.user_id,
+                price=round(max(product.price * (100 - discount) / 100, 0), 2),
+                created_at=created_at,
+            )
+        )
+
+    price_repository.add_prices(missing_prices)
+    return len(missing_prices)
+
+
 if __name__ == "__main__":
     result = seed_demo_database()
     print(
         "Dados de demonstração prontos: "
         f"{result['users_created']} usuários e "
         f"{result['stores_created']} locais e "
-        f"{result['products_created']} produtos criados."
+        f"{result['products_created']} produtos e "
+        f"{result['prices_created']} preços criados."
     )

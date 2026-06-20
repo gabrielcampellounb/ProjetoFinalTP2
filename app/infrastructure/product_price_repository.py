@@ -3,6 +3,7 @@
 import sqlite3
 from datetime import datetime
 
+from app.domain.product import Product
 from app.domain.product_price import ProductPrice
 
 
@@ -98,3 +99,99 @@ class SQLiteProductPriceRepository:
             )
             for row in rows
         ]
+
+    def list_price_keys(self) -> set[tuple[str, int]]:
+        """DEMO: retorna vínculos produto/local já registrados."""
+        rows = self.connection.execute(
+            "SELECT product_bar_code, store_id FROM product_prices;"
+        ).fetchall()
+        return {(row[0], row[1]) for row in rows}
+
+    def add_prices(self, product_prices: list[ProductPrice]) -> None:
+        """DEMO: persiste vários preços observados em uma transação."""
+        self.connection.executemany(
+            """
+            INSERT INTO product_prices (
+                product_bar_code, store_id, user_id, price, created_at
+            )
+            VALUES (?, ?, ?, ?, ?);
+            """,
+            [
+                (
+                    item.product_bar_code,
+                    item.store_id,
+                    item.user_id,
+                    item.price,
+                    item.created_at.isoformat(),
+                )
+                for item in product_prices
+            ],
+        )
+        self.connection.commit()
+
+    def list_products_by_store(
+        self,
+        store_id: int,
+        query: str,
+        limit: int,
+        offset: int,
+    ) -> list[tuple[Product, int, float]]:
+        """US06/WEB: lista produtos com último preço observado na loja."""
+        pattern = f"%{query}%"
+        rows = self.connection.execute(
+            """
+            SELECT p.bar_code, p.name, p.brand, p.price, p.quantity, pp.price
+            FROM products AS p
+            JOIN product_prices AS pp
+              ON pp.product_bar_code = p.bar_code
+            WHERE p.active = 1
+              AND pp.store_id = ?
+              AND pp.id = (
+                  SELECT MAX(latest.id)
+                  FROM product_prices AS latest
+                  WHERE latest.product_bar_code = pp.product_bar_code
+                    AND latest.store_id = pp.store_id
+              )
+              AND (
+                  ? = ''
+                  OR p.name LIKE ? COLLATE NOCASE
+                  OR p.brand LIKE ? COLLATE NOCASE
+              )
+            ORDER BY p.name COLLATE NOCASE, p.bar_code
+            LIMIT ? OFFSET ?;
+            """,
+            (store_id, query, pattern, pattern, limit, offset),
+        ).fetchall()
+        return [
+            (
+                Product(
+                    bar_code=row[0],
+                    name=row[1],
+                    brand=row[2],
+                    price=row[3],
+                ),
+                row[4],
+                row[5],
+            )
+            for row in rows
+        ]
+
+    def count_products_by_store(self, store_id: int, query: str) -> int:
+        """US06/WEB: conta produtos associados à loja e busca."""
+        pattern = f"%{query}%"
+        return self.connection.execute(
+            """
+            SELECT COUNT(DISTINCT p.bar_code)
+            FROM products AS p
+            JOIN product_prices AS pp
+              ON pp.product_bar_code = p.bar_code
+            WHERE p.active = 1
+              AND pp.store_id = ?
+              AND (
+                  ? = ''
+                  OR p.name LIKE ? COLLATE NOCASE
+                  OR p.brand LIKE ? COLLATE NOCASE
+              );
+            """,
+            (store_id, query, pattern, pattern),
+        ).fetchone()[0]

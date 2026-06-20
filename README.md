@@ -68,7 +68,7 @@ Credenciais de demonstração:
 
 A população é idempotente: executá-la novamente não duplica usuários ou
 produtos fictícios. A carga inclui mais de 3.000 produtos e seis locais de
-compra.
+compra, com preços observados distribuídos entre as lojas.
 
 ## Testes
 

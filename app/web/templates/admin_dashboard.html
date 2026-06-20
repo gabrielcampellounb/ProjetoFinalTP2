@@ -22,4 +22,9 @@
       <p class="metric">{{ metrics.total_registered_prices }}</p>
     </article>
   </div>
+  <p>
+    <a href="{{ url_for('html.new_product_page') }}">Cadastrar produto</a>
+    ·
+    <a href="{{ url_for('html.new_store_page') }}">Cadastrar loja</a>
+  </p>
 {% endblock %}

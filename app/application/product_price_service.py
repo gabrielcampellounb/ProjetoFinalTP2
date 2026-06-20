@@ -1,5 +1,6 @@
 """Casos de uso do histórico de preços por local."""
 
+import math
 from datetime import datetime
 
 from app.domain.exceptions import ProductNotFoundError, StoreNotFoundError
@@ -59,6 +60,37 @@ class ProductPriceService:
         """
         self._ensure_product_exists(product_bar_code)
         return self.price_repository.list_prices_by_product(product_bar_code)
+
+    def list_product_price_details(self, product_bar_code: str) -> list[tuple]:
+        """US06/WEB: lista preços acompanhados dos locais."""
+        return [
+            (price, self.store_repository.get_store_by_id(price.store_id))
+            for price in self.list_product_prices(product_bar_code)
+        ]
+
+    def list_store_products_page(
+        self,
+        store_id: int,
+        query: str,
+        page: int,
+        page_size: int = 50,
+    ) -> tuple[list, int, int, int]:
+        """US06/WEB: lista uma página de produtos da loja."""
+        self._ensure_store_exists(store_id)
+        normalized_query = query.strip()
+        total = self.price_repository.count_products_by_store(
+            store_id,
+            normalized_query,
+        )
+        total_pages = max(math.ceil(total / page_size), 1)
+        current_page = min(max(page, 1), total_pages)
+        items = self.price_repository.list_products_by_store(
+            store_id=store_id,
+            query=normalized_query,
+            limit=page_size,
+            offset=(current_page - 1) * page_size,
+        )
+        return items, current_page, total_pages, total
 
     def _ensure_product_exists(self, product_bar_code: str) -> None:
         """US06: garante que o produto informado esteja cadastrado."""
