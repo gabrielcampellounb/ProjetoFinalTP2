@@ -15,12 +15,15 @@ class TestDEMODemoSeed(unittest.TestCase):
     def tearDown(self):
         self.connection.close()
 
-    def test_demo_seed_creates_users_and_multiple_products(self):
-        """DEMO: carga deve criar acessos e vários produtos fictícios."""
+    def test_demo_seed_creates_users_stores_and_thousands_of_products(self):
+        """DEMO: carga deve criar acessos, locais e milhares de produtos."""
         result = seed_demo_data(self.connection)
 
         product_count = self.connection.execute(
             "SELECT COUNT(*) FROM products;"
+        ).fetchone()[0]
+        store_count = self.connection.execute(
+            "SELECT COUNT(*) FROM stores;"
         ).fetchone()[0]
         users = self.connection.execute(
             """
@@ -30,7 +33,8 @@ class TestDEMODemoSeed(unittest.TestCase):
             """
         ).fetchall()
 
-        self.assertGreaterEqual(product_count, 10)
+        self.assertGreaterEqual(product_count, 3000)
+        self.assertGreaterEqual(store_count, 5)
         self.assertEqual(len(users), 2)
         self.assertEqual(
             {user[0] for user in users},
@@ -48,6 +52,7 @@ class TestDEMODemoSeed(unittest.TestCase):
         )
         self.assertEqual(result["products_created"], product_count)
         self.assertEqual(result["users_created"], 2)
+        self.assertEqual(result["stores_created"], store_count)
 
     def test_demo_seed_is_idempotent(self):
         """DEMO: executar a carga novamente não deve duplicar registros."""
@@ -57,13 +62,19 @@ class TestDEMODemoSeed(unittest.TestCase):
         product_count = self.connection.execute(
             "SELECT COUNT(*) FROM products;"
         ).fetchone()[0]
+        store_count = self.connection.execute(
+            "SELECT COUNT(*) FROM stores;"
+        ).fetchone()[0]
         user_count = self.connection.execute("SELECT COUNT(*) FROM users;").fetchone()[
             0
         ]
 
         self.assertGreater(first_result["products_created"], 0)
         self.assertEqual(first_result["users_created"], 2)
+        self.assertGreaterEqual(first_result["stores_created"], 5)
         self.assertEqual(second_result["products_created"], 0)
         self.assertEqual(second_result["users_created"], 0)
-        self.assertGreaterEqual(product_count, 10)
+        self.assertEqual(second_result["stores_created"], 0)
+        self.assertGreaterEqual(product_count, 3000)
+        self.assertGreaterEqual(store_count, 5)
         self.assertEqual(user_count, 2)
