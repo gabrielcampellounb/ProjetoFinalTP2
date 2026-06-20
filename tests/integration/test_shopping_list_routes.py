@@ -172,6 +172,57 @@ class TestUS03ShoppingListRoutes(unittest.TestCase):
         self.assertIn("Compras favoritas", html)
         self.assertIn("Lista favorita", html)
 
+    def test_us03_add_item_to_shopping_list_html_flow(self):
+        """US03/WEB: usuário deve adicionar item e vê-lo na lista."""
+        self.create_product_as_admin()
+        list_id = self.create_list_for_user(user_id=7)
+
+        add_response = self.client.post(
+            f"/shopping-lists/{list_id}/items/view",
+            data={
+                "bar_code": "1234567890444",
+                "quantity": "3",
+            },
+        )
+        detail_response = self.client.get(
+            f"/shopping-lists/{list_id}/view"
+        )
+
+        self.assertEqual(add_response.status_code, 302)
+        self.assertTrue(
+            add_response.headers["Location"].endswith(
+                f"/shopping-lists/{list_id}/view"
+            )
+        )
+        self.assertEqual(detail_response.status_code, 200)
+        html = detail_response.get_data(as_text=True)
+        self.assertIn("Compras da semana", html)
+        self.assertIn("Arroz Integral", html)
+        self.assertIn("Tio João", html)
+        self.assertIn(">3<", html)
+
+    def test_us03_shopping_list_html_shows_product_selector(self):
+        """US03/WEB: detalhe deve oferecer produtos ativos para inclusão."""
+        self.create_product_as_admin()
+        list_id = self.create_list_for_user(user_id=7)
+
+        response = self.client.get(f"/shopping-lists/{list_id}/view")
+
+        self.assertEqual(response.status_code, 200)
+        html = response.get_data(as_text=True)
+        self.assertIn("Adicionar item", html)
+        self.assertIn("Arroz Integral", html)
+        self.assertIn('name="quantity"', html)
+
+    def test_us03_reject_another_users_shopping_list_html(self):
+        """US03/WEB: usuário não deve acessar lista pertencente a outro."""
+        list_id = self.create_list_for_user(user_id=7)
+        self.authenticate_user(user_id=8)
+
+        response = self.client.get(f"/shopping-lists/{list_id}/view")
+
+        self.assertEqual(response.status_code, 404)
+
     def test_us03_reject_non_positive_quantity_route(self):
         """US03: quantidade menor ou igual a zero deve retornar HTTP 400."""
         self.create_product_as_admin()

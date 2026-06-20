@@ -120,6 +120,32 @@ class TestUS03SQLiteShoppingListRepository(unittest.TestCase):
         self.assertEqual(stored_item.bar_code, item.bar_code)
         self.assertEqual(stored_item.quantity, 2)
 
+    def test_us03_list_all_items_from_shopping_list(self):
+        """US03: deve listar todos os itens pertencentes à lista."""
+        shopping_list = self.create_persisted_list()
+        first = ShoppingListItem(
+            list_id=shopping_list.list_id,
+            bar_code="1234567890444",
+            quantity=2,
+        )
+        second = ShoppingListItem(
+            list_id=shopping_list.list_id,
+            bar_code="1234567890555",
+            quantity=3,
+        )
+        self.repository.add_item(first)
+        self.repository.add_item(second)
+
+        items = self.repository.list_items(shopping_list.list_id)
+
+        self.assertEqual(
+            [(item.bar_code, item.quantity) for item in items],
+            [
+                ("1234567890444", 2),
+                ("1234567890555", 3),
+            ],
+        )
+
     def test_us03_update_shopping_list_item_quantity(self):
         """US03: deve persistir a nova quantidade do item."""
         shopping_list = self.create_persisted_list()

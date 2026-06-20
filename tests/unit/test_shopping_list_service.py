@@ -52,6 +52,13 @@ class FakeShoppingListRepository:
     def get_item(self, list_id, bar_code):
         return self.items.get((list_id, bar_code))
 
+    def list_items(self, list_id):
+        return [
+            item
+            for (stored_list_id, _), item in self.items.items()
+            if stored_list_id == list_id
+        ]
+
     def remove_item(self, list_id, bar_code):
         del self.items[(list_id, bar_code)]
 
@@ -169,6 +176,34 @@ class TestUS03ShoppingListService(unittest.TestCase):
             self.repository.items[(shopping_list.list_id, product.bar_code)],
             item,
         )
+
+    def test_us03_get_owned_list_with_resolved_items(self):
+        """US03: detalhe deve retornar lista e produtos dos itens."""
+        shopping_list, product = self.create_list_and_product()
+        self.service.add_item(
+            user_id=7,
+            list_id=shopping_list.list_id,
+            bar_code=product.bar_code,
+            quantity=2,
+        )
+
+        stored_list, items = self.service.get_shopping_list_details(
+            user_id=7,
+            list_id=shopping_list.list_id,
+        )
+
+        self.assertIs(stored_list, shopping_list)
+        self.assertEqual(items, [(product, 2)])
+
+    def test_us03_reject_details_from_another_users_list(self):
+        """US03: usuário não deve consultar itens de lista alheia."""
+        shopping_list, _ = self.create_list_and_product()
+
+        with self.assertRaises(ShoppingListNotFoundError):
+            self.service.get_shopping_list_details(
+                user_id=8,
+                list_id=shopping_list.list_id,
+            )
 
     def test_us03_reject_missing_product(self):
         """US03: deve rejeitar produto inexistente com erro controlado."""
