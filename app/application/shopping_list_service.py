@@ -89,6 +89,23 @@ class ShoppingListService:
         self.shopping_list_repository.add_item(item)
         return item
 
+    def get_shopping_list_details(
+        self,
+        user_id: int,
+        list_id: int,
+    ) -> tuple[ShoppingList, list[tuple]]:
+        """US03: consulta uma lista própria e seus produtos.
+
+        Pré-condição: a lista deve existir e pertencer ao usuário.
+        Pós-condição: retorna a lista e pares de produto com quantidade.
+        """
+        shopping_list = self._get_owned_list_or_raise(user_id, list_id)
+        resolved_items = []
+        for item in self.shopping_list_repository.list_items(list_id):
+            product, _ = self._get_product_or_raise(item.bar_code)
+            resolved_items.append((product, item.quantity))
+        return shopping_list, resolved_items
+
     def update_item(
         self,
         user_id: int,

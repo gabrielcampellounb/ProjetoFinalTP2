@@ -191,6 +191,30 @@ class SQLiteShoppingListRepository:
             quantity=row[2],
         )
 
+    def list_items(self, list_id: int) -> list[ShoppingListItem]:
+        """US03: lista todos os itens de uma lista.
+
+        Pré-condição: list_id identifica a lista consultada.
+        Pós-condição: retorna os itens ordenados pelo código do produto.
+        """
+        rows = self.connection.execute(
+            """
+            SELECT list_id, bar_code, quantity
+            FROM shopping_list_items
+            WHERE list_id = ?
+            ORDER BY bar_code;
+            """,
+            (list_id,),
+        ).fetchall()
+        return [
+            ShoppingListItem(
+                list_id=row[0],
+                bar_code=row[1],
+                quantity=row[2],
+            )
+            for row in rows
+        ]
+
     def update_item(self, item: ShoppingListItem) -> None:
         """US03: persiste a nova quantidade de um item.
 

@@ -128,6 +128,48 @@ def create_html_blueprint(
         )
         return redirect(url_for("html.shopping_lists_page"))
 
+    @blueprint.get("/shopping-lists/<int:list_id>/view")
+    @authenticated_required
+    def shopping_list_detail_page(list_id):
+        """US03/WEB: exibe itens e produtos disponíveis para inclusão.
+
+        Pré-condição: a lista deve pertencer ao usuário autenticado.
+        Pós-condição: retorna o detalhe da lista com HTTP 200.
+        """
+        query = request.args.get("q", "").strip()
+        shopping_list, items = shopping_list_service.get_shopping_list_details(
+            user_id=session["user_id"],
+            list_id=list_id,
+        )
+        products, _, _, _ = product_service.list_products_page(
+            query=query,
+            page=1,
+            page_size=50,
+        )
+        return render_template(
+            "shopping_list_detail.html",
+            shopping_list=shopping_list,
+            items=items,
+            products=products,
+            query=query,
+        )
+
+    @blueprint.post("/shopping-lists/<int:list_id>/items/view")
+    @authenticated_required
+    def add_shopping_list_item_page(list_id):
+        """US03/WEB: adiciona um produto à lista pelo formulário.
+
+        Pré-condição: lista própria, produto existente e quantidade positiva.
+        Pós-condição: persiste o item e redireciona ao detalhe.
+        """
+        shopping_list_service.add_item(
+            user_id=session["user_id"],
+            list_id=list_id,
+            bar_code=request.form["bar_code"],
+            quantity=int(request.form["quantity"]),
+        )
+        return redirect(url_for("html.shopping_list_detail_page", list_id=list_id))
+
     @blueprint.get("/catalog")
     def products_page():
         """US02/US06/WEB: busca produtos e filtra por loja."""

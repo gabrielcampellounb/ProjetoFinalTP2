@@ -21,6 +21,16 @@
         <p class="muted">
           Criada em {{ shopping_list.created_at.strftime("%d/%m/%Y") }}
         </p>
+        <p>
+          <a
+            href="{{ url_for(
+              'html.shopping_list_detail_page',
+              list_id=shopping_list.list_id
+            ) }}"
+          >
+            Ver e adicionar itens
+          </a>
+        </p>
         {% if shopping_list.favorite %}
           <strong>★ Lista favorita</strong>
         {% else %}

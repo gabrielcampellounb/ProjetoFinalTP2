@@ -184,15 +184,11 @@ class TestUS03ShoppingListRoutes(unittest.TestCase):
                 "quantity": "3",
             },
         )
-        detail_response = self.client.get(
-            f"/shopping-lists/{list_id}/view"
-        )
+        detail_response = self.client.get(f"/shopping-lists/{list_id}/view")
 
         self.assertEqual(add_response.status_code, 302)
         self.assertTrue(
-            add_response.headers["Location"].endswith(
-                f"/shopping-lists/{list_id}/view"
-            )
+            add_response.headers["Location"].endswith(f"/shopping-lists/{list_id}/view")
         )
         self.assertEqual(detail_response.status_code, 200)
         html = detail_response.get_data(as_text=True)
