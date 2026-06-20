@@ -80,6 +80,7 @@ def create_app(connection: sqlite3.Connection) -> Flask:
             store_service,
             admin_metrics_service,
             product_price_service,
+            shopping_list_service,
         )
     )
     _register_error_handlers(flask_app)

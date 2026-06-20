@@ -14,6 +14,7 @@ class ShoppingList:
         user_id: int,
         name: str,
         created_at: datetime,
+        favorite: bool = False,
     ) -> None:
         """US03: cria uma lista de compras validada.
 
@@ -24,6 +25,7 @@ class ShoppingList:
         self.user_id = self._validate_user_id(user_id)
         self.name = self._validate_name(name)
         self.created_at = self._validate_created_at(created_at)
+        self.favorite = self._validate_favorite(favorite)
 
     @staticmethod
     def _validate_list_id(list_id: int | None) -> int | None:
@@ -62,6 +64,15 @@ class ShoppingList:
                 "A data de criação da lista deve ser válida."
             )
         return created_at
+
+    @staticmethod
+    def _validate_favorite(favorite: bool) -> bool:
+        """US03: valida o indicador de lista favorita."""
+        if not isinstance(favorite, bool):
+            raise InvalidShoppingListError(
+                "O indicador de lista favorita deve ser booleano."
+            )
+        return favorite
 
 
 class ShoppingListItem:

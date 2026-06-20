@@ -20,5 +20,10 @@
       <p>{{ cart_count }} item(ns) planejado(s).</p>
       <a href="{{ url_for('html.cart_page') }}">Ver carrinho</a>
     </article>
+    <article class="card">
+      <h2>Listas de compras</h2>
+      <p>Crie listas e escolha uma como sua favorita.</p>
+      <a href="{{ url_for('html.shopping_lists_page') }}">Gerenciar listas</a>
+    </article>
   </div>
 {% endblock %}

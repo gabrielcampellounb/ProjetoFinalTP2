@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Minhas listas | Compra Certa{% endblock %}
+
+{% block content %}
+  <h1>Minhas listas</h1>
+
+  <section class="card">
+    <h2>Criar lista</h2>
+    <form method="post" action="{{ url_for('html.shopping_lists_page') }}">
+      <label for="name">Nome da lista</label>
+      <input id="name" name="name" required>
+      <button type="submit">Criar lista</button>
+    </form>
+  </section>
+
+  <div class="grid">
+    {% for shopping_list in shopping_lists %}
+      <article class="card">
+        <h2>{{ shopping_list.name }}</h2>
+        <p class="muted">
+          Criada em {{ shopping_list.created_at.strftime("%d/%m/%Y") }}
+        </p>
+        {% if shopping_list.favorite %}
+          <strong>★ Lista favorita</strong>
+        {% else %}
+          <form
+            method="post"
+            action="{{ url_for(
+              'html.favorite_shopping_list_page',
+              list_id=shopping_list.list_id
+            ) }}"
+          >
+            <button type="submit">Marcar como favorita</button>
+          </form>
+        {% endif %}
+      </article>
+    {% else %}
+      <p class="empty">Você ainda não criou nenhuma lista.</p>
+    {% endfor %}
+  </div>
+{% endblock %}

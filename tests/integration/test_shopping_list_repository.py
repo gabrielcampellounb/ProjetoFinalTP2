@@ -82,7 +82,8 @@ class TestUS03SQLiteShoppingListRepository(unittest.TestCase):
         repository.create_table()
 
         columns = {
-            row[1] for row in connection.execute(
+            row[1]
+            for row in connection.execute(
                 "PRAGMA table_info(shopping_lists);"
             ).fetchall()
         }

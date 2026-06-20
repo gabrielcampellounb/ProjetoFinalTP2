@@ -142,9 +142,7 @@ class TestUS03ShoppingListRoutes(unittest.TestCase):
         """US03: usuário deve favoritar sua lista pela API."""
         list_id = self.create_list_for_user(user_id=7)
 
-        response = self.client.patch(
-            f"/shopping-lists/{list_id}/favorite"
-        )
+        response = self.client.patch(f"/shopping-lists/{list_id}/favorite")
 
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.get_json()["favorite"])
@@ -164,9 +162,7 @@ class TestUS03ShoppingListRoutes(unittest.TestCase):
             WHERE user_id = 7 AND name = 'Compras favoritas';
             """
         ).fetchone()[0]
-        favorite_response = self.client.post(
-            f"/shopping-lists/{list_id}/favorite/view"
-        )
+        favorite_response = self.client.post(f"/shopping-lists/{list_id}/favorite/view")
         page_response = self.client.get("/shopping-lists/view")
 
         self.assertEqual(create_response.status_code, 302)

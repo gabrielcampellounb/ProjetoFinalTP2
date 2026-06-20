@@ -6,6 +6,7 @@ from app.application.admin_metrics_service import AdminMetricsService
 from app.application.cart_service import CartService
 from app.application.product_price_service import ProductPriceService
 from app.application.product_service import ProductService
+from app.application.shopping_list_service import ShoppingListService
 from app.application.store_service import StoreService
 from app.application.user_service import UserService
 from app.domain.exceptions import (
@@ -23,6 +24,7 @@ def create_html_blueprint(
     store_service: StoreService,
     admin_metrics_service: AdminMetricsService,
     product_price_service: ProductPriceService,
+    shopping_list_service: ShoppingListService,
 ) -> Blueprint:
     """US01-US06/AD04/WEB: cria as páginas usando serviços injetados.
 
@@ -89,6 +91,42 @@ def create_html_blueprint(
             cart_count=sum(session.get("cart", {}).values()),
             store_count=len(store_service.list_stores()),
         )
+
+    @blueprint.route("/shopping-lists/view", methods=["GET", "POST"])
+    @authenticated_required
+    def shopping_lists_page():
+        """US03/WEB: cria e lista as listas de compras do usuário.
+
+        Pré-condição: a sessão deve conter usuário autenticado.
+        Pós-condição: cria uma lista ou renderiza somente as listas próprias.
+        """
+        if request.method == "POST":
+            shopping_list_service.create_shopping_list(
+                user_id=session["user_id"],
+                name=request.form["name"],
+            )
+            return redirect(url_for("html.shopping_lists_page"))
+
+        return render_template(
+            "shopping_lists.html",
+            shopping_lists=shopping_list_service.list_shopping_lists(
+                session["user_id"]
+            ),
+        )
+
+    @blueprint.post("/shopping-lists/<int:list_id>/favorite/view")
+    @authenticated_required
+    def favorite_shopping_list_page(list_id):
+        """US03/WEB: marca uma lista própria como favorita.
+
+        Pré-condição: a lista deve pertencer ao usuário autenticado.
+        Pós-condição: atualiza a favorita e redireciona à listagem.
+        """
+        shopping_list_service.mark_as_favorite(
+            user_id=session["user_id"],
+            list_id=list_id,
+        )
+        return redirect(url_for("html.shopping_lists_page"))
 
     @blueprint.get("/catalog")
     def products_page():

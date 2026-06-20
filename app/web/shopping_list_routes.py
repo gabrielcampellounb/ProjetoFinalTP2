@@ -48,6 +48,20 @@ def create_shopping_list_blueprint(
         )
         return jsonify(_serialize_item(item)), 201
 
+    @blueprint.patch("/shopping-lists/<int:list_id>/favorite")
+    @authenticated_required
+    def mark_favorite(list_id):
+        """US03: marca uma lista própria como favorita.
+
+        Pré-condição: sessão autenticada e lista pertencente ao usuário.
+        Pós-condição: retorna a lista favorita com HTTP 200.
+        """
+        shopping_list = shopping_list_service.mark_as_favorite(
+            user_id=session["user_id"],
+            list_id=list_id,
+        )
+        return jsonify(_serialize_shopping_list(shopping_list)), 200
+
     @blueprint.patch("/shopping-lists/<int:list_id>/items/<bar_code>")
     @authenticated_required
     def update_item(list_id, bar_code):
@@ -90,6 +104,7 @@ def _serialize_shopping_list(shopping_list) -> dict:
         "user_id": shopping_list.user_id,
         "name": shopping_list.name,
         "created_at": shopping_list.created_at.isoformat(),
+        "favorite": shopping_list.favorite,
     }
 
 

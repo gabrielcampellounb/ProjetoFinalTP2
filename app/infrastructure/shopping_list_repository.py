@@ -29,7 +29,8 @@ class SQLiteShoppingListRepository:
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER NOT NULL,
                 name TEXT NOT NULL,
-                created_at TEXT NOT NULL
+                created_at TEXT NOT NULL,
+                favorite INTEGER NOT NULL DEFAULT 0
             );
             """
         )
@@ -43,6 +44,7 @@ class SQLiteShoppingListRepository:
             );
             """
         )
+        self._ensure_favorite_column()
         self.connection.commit()
 
     def add_shopping_list(self, shopping_list: ShoppingList) -> None:
@@ -53,13 +55,14 @@ class SQLiteShoppingListRepository:
         """
         cursor = self.connection.execute(
             """
-            INSERT INTO shopping_lists (user_id, name, created_at)
-            VALUES (?, ?, ?);
+            INSERT INTO shopping_lists (user_id, name, created_at, favorite)
+            VALUES (?, ?, ?, ?);
             """,
             (
                 shopping_list.user_id,
                 shopping_list.name,
                 shopping_list.created_at.isoformat(),
+                int(shopping_list.favorite),
             ),
         )
         self.connection.commit()
@@ -76,7 +79,7 @@ class SQLiteShoppingListRepository:
         """
         row = self.connection.execute(
             """
-            SELECT id, user_id, name, created_at
+            SELECT id, user_id, name, created_at, favorite
             FROM shopping_lists
             WHERE id = ?;
             """,
@@ -91,7 +94,61 @@ class SQLiteShoppingListRepository:
             user_id=row[1],
             name=row[2],
             created_at=datetime.fromisoformat(row[3]),
+            favorite=bool(row[4]),
         )
+
+    def list_shopping_lists_by_user(
+        self,
+        user_id: int,
+    ) -> list[ShoppingList]:
+        """US03: lista as listas pertencentes a um usuário.
+
+        Pré-condição: user_id identifica o proprietário.
+        Pós-condição: retorna as listas ordenadas pela criação.
+        """
+        rows = self.connection.execute(
+            """
+            SELECT id, user_id, name, created_at, favorite
+            FROM shopping_lists
+            WHERE user_id = ?
+            ORDER BY id;
+            """,
+            (user_id,),
+        ).fetchall()
+        return [
+            ShoppingList(
+                list_id=row[0],
+                user_id=row[1],
+                name=row[2],
+                created_at=datetime.fromisoformat(row[3]),
+                favorite=bool(row[4]),
+            )
+            for row in rows
+        ]
+
+    def set_favorite(self, user_id: int, list_id: int) -> None:
+        """US03: mantém uma única lista favorita por usuário.
+
+        Pré-condição: list_id pertence ao user_id informado.
+        Pós-condição: somente a lista escolhida fica com favorite igual a um.
+        """
+        with self.connection:
+            self.connection.execute(
+                """
+                UPDATE shopping_lists
+                SET favorite = 0
+                WHERE user_id = ?;
+                """,
+                (user_id,),
+            )
+            self.connection.execute(
+                """
+                UPDATE shopping_lists
+                SET favorite = 1
+                WHERE id = ? AND user_id = ?;
+                """,
+                (list_id, user_id),
+            )
 
     def add_item(self, item: ShoppingListItem) -> None:
         """US03: persiste um item em uma lista de compras.
@@ -164,3 +221,16 @@ class SQLiteShoppingListRepository:
             (list_id, bar_code),
         )
         self.connection.commit()
+
+    def _ensure_favorite_column(self) -> None:
+        """US03: adiciona favorite a bancos criados anteriormente."""
+        columns = self.connection.execute(
+            "PRAGMA table_info(shopping_lists);"
+        ).fetchall()
+        if "favorite" not in {column[1] for column in columns}:
+            self.connection.execute(
+                """
+                ALTER TABLE shopping_lists
+                ADD COLUMN favorite INTEGER NOT NULL DEFAULT 0;
+                """
+            )

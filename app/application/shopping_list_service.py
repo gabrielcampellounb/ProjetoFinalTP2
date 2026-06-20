@@ -48,6 +48,29 @@ class ShoppingListService:
         self.shopping_list_repository.add_shopping_list(shopping_list)
         return shopping_list
 
+    def list_shopping_lists(self, user_id: int) -> list[ShoppingList]:
+        """US03: lista as listas pertencentes ao usuário.
+
+        Pré-condição: user_id identifica o proprietário consultado.
+        Pós-condição: retorna somente as listas desse usuário.
+        """
+        return self.shopping_list_repository.list_shopping_lists_by_user(user_id)
+
+    def mark_as_favorite(
+        self,
+        user_id: int,
+        list_id: int,
+    ) -> ShoppingList:
+        """US03: define uma única lista favorita para o usuário.
+
+        Pré-condição: a lista deve existir e pertencer ao usuário.
+        Pós-condição: retorna a lista marcada e desfavorita qualquer anterior.
+        """
+        shopping_list = self._get_owned_list_or_raise(user_id, list_id)
+        self.shopping_list_repository.set_favorite(user_id, list_id)
+        shopping_list.favorite = True
+        return shopping_list
+
     def add_item(
         self,
         user_id: int,
