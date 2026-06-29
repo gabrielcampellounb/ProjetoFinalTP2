@@ -219,6 +219,8 @@ def create_html_blueprint(
             stores=store_service.list_stores(),
             nearest_store=None,
             distance_km=None,
+            user_latitude=None,
+            user_longitude=None,
         )
 
     @blueprint.get("/stores/nearest/view")
@@ -238,6 +240,8 @@ def create_html_blueprint(
             stores=store_service.list_stores(),
             nearest_store=nearest_store,
             distance_km=distance_km,
+            user_latitude=float(request.args["latitude"]),
+            user_longitude=float(request.args["longitude"]),
         )
 
     @blueprint.route("/admin/stores/new", methods=["GET", "POST"])

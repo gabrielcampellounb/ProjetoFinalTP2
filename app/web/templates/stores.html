@@ -3,6 +3,15 @@
 {% block title %}Locais de compra | Compra Certa{% endblock %}
 
 {% block content %}
+  {% if nearest_store %}
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIINfQgenKu8scTW0YlPJsE0P8MLJkz8yE="
+      crossorigin=""
+    >
+  {% endif %}
+
   <h1>Locais de compra</h1>
 
   <section class="card" aria-labelledby="nearest-store-title">
@@ -21,6 +30,16 @@
         {{ nearest_store.address }}<br>
         <span class="muted">Distância aproximada: {{ distance_km }} km</span>
       </p>
+      <div
+        id="nearest-store-map"
+        aria-label="Mapa com sua localização e a loja mais próxima"
+        data-user-latitude="{{ user_latitude }}"
+        data-user-longitude="{{ user_longitude }}"
+        data-store-latitude="{{ nearest_store.latitude }}"
+        data-store-longitude="{{ nearest_store.longitude }}"
+        data-store-name="{{ nearest_store.name }}"
+        style="height: 360px; margin-top: 1rem;"
+      ></div>
     {% endif %}
   </section>
 
@@ -58,7 +77,37 @@
         document.getElementById("latitude").value = position.coords.latitude;
         document.getElementById("longitude").value = position.coords.longitude;
         nearestStoreForm.submit();
+      }, () => {
+        alert("Não foi possível acessar sua localização. Verifique a permissão de GPS.");
       });
     });
   </script>
+
+  {% if nearest_store %}
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+    <script>
+      const mapElement = document.getElementById("nearest-store-map");
+      const userPoint = [
+        Number(mapElement.dataset.userLatitude),
+        Number(mapElement.dataset.userLongitude),
+      ];
+      const storePoint = [
+        Number(mapElement.dataset.storeLatitude),
+        Number(mapElement.dataset.storeLongitude),
+      ];
+      const map = L.map("nearest-store-map");
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "&copy; OpenStreetMap contributors",
+      }).addTo(map);
+      L.marker(userPoint).addTo(map).bindPopup("Sua localização");
+      L.marker(storePoint)
+        .addTo(map)
+        .bindPopup(`Loja mais próxima: ${mapElement.dataset.storeName}`);
+      map.fitBounds([userPoint, storePoint], { padding: [32, 32] });
+    </script>
+  {% endif %}
 {% endblock %}
