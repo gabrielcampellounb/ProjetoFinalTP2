@@ -2,7 +2,7 @@
 
 {% block title %}Locais de compra | Compra Certa{% endblock %}
 
-{% block content %}
+{% block extra_head %}
   {% if nearest_store %}
     <link
       rel="stylesheet"
@@ -10,11 +10,38 @@
       integrity="sha256-p4NxAoJBhIINfQgenKu8scTW0YlPJsE0P8MLJkz8yE="
       crossorigin=""
     >
-  {% endif %}
+    <style>
+      .nearest-store-result {
+        margin: 0 auto;
+        max-width: 760px;
+      }
 
+      .nearest-store-map {
+        border: 1px solid var(--border);
+        border-radius: .75rem;
+        height: 360px;
+        margin-top: 1rem;
+        overflow: hidden;
+        position: relative;
+        width: 100%;
+        z-index: 0;
+      }
+
+      .leaflet-container {
+        max-width: 100%;
+        z-index: 0;
+      }
+    </style>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
   <h1>Locais de compra</h1>
 
-  <section class="card" aria-labelledby="nearest-store-title">
+  <section
+    class="card{% if nearest_store %} nearest-store-result{% endif %}"
+    aria-labelledby="nearest-store-title"
+  >
     <h2 id="nearest-store-title">Loja mais próxima</h2>
     <p class="muted">
       Use o GPS do navegador para encontrar o local cadastrado mais perto de você.
@@ -32,39 +59,43 @@
       </p>
       <div
         id="nearest-store-map"
+        class="nearest-store-map"
         aria-label="Mapa com sua localização e a loja mais próxima"
         data-user-latitude="{{ user_latitude }}"
         data-user-longitude="{{ user_longitude }}"
         data-store-latitude="{{ nearest_store.latitude }}"
         data-store-longitude="{{ nearest_store.longitude }}"
         data-store-name="{{ nearest_store.name }}"
-        style="height: 360px; margin-top: 1rem;"
       ></div>
     {% endif %}
   </section>
 
-  <div class="grid">
-    {% for store in stores %}
-      <article class="card">
-        <h2>{{ store.name }}</h2>
-        <p>{{ store.address }}</p>
-        {% if store.latitude is not none and store.longitude is not none %}
-          <p class="muted">
-            Coordenadas: {{ store.latitude }}, {{ store.longitude }}
-          </p>
-        {% endif %}
-        {% if store.observation %}
-          <p class="muted">{{ store.observation }}</p>
-        {% endif %}
-        <a href="{{ url_for('html.products_page', store_id=store.store_id) }}">
-          Ver produtos desta loja
-        </a>
-      </article>
-    {% else %}
-      <p class="empty">Nenhum local cadastrado.</p>
-    {% endfor %}
-  </div>
+  {% if not nearest_store %}
+    <div class="grid">
+      {% for store in stores %}
+        <article class="card">
+          <h2>{{ store.name }}</h2>
+          <p>{{ store.address }}</p>
+          {% if store.latitude is not none and store.longitude is not none %}
+            <p class="muted">
+              Coordenadas: {{ store.latitude }}, {{ store.longitude }}
+            </p>
+          {% endif %}
+          {% if store.observation %}
+            <p class="muted">{{ store.observation }}</p>
+          {% endif %}
+          <a href="{{ url_for('html.products_page', store_id=store.store_id) }}">
+            Ver produtos desta loja
+          </a>
+        </article>
+      {% else %}
+        <p class="empty">Nenhum local cadastrado.</p>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endblock %}
 
+{% block scripts %}
   <script>
     const gpsButton = document.getElementById("gps-button");
     const nearestStoreForm = document.getElementById("nearest-store-form");

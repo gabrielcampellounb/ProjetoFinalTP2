@@ -82,6 +82,7 @@
         main { padding-top: 1rem; }
       }
     </style>
+    {% block extra_head %}{% endblock %}
   </head>
   <body>
     <header>
@@ -116,5 +117,6 @@
     <main>
       {% block content %}{% endblock %}
     </main>
+    {% block scripts %}{% endblock %}
   </body>
 </html>
