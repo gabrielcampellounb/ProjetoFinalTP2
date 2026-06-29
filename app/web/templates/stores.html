@@ -4,11 +4,36 @@
 
 {% block content %}
   <h1>Locais de compra</h1>
+
+  <section class="card" aria-labelledby="nearest-store-title">
+    <h2 id="nearest-store-title">Loja mais próxima</h2>
+    <p class="muted">
+      Use o GPS do navegador para encontrar o local cadastrado mais perto de você.
+    </p>
+    <form id="nearest-store-form" method="get" action="{{ url_for('html.nearest_store_page') }}">
+      <input id="latitude" name="latitude" type="hidden">
+      <input id="longitude" name="longitude" type="hidden">
+      <button id="gps-button" type="button">Usar meu GPS</button>
+    </form>
+    {% if nearest_store %}
+      <p>
+        <strong>{{ nearest_store.name }}</strong><br>
+        {{ nearest_store.address }}<br>
+        <span class="muted">Distância aproximada: {{ distance_km }} km</span>
+      </p>
+    {% endif %}
+  </section>
+
   <div class="grid">
     {% for store in stores %}
       <article class="card">
         <h2>{{ store.name }}</h2>
         <p>{{ store.address }}</p>
+        {% if store.latitude is not none and store.longitude is not none %}
+          <p class="muted">
+            Coordenadas: {{ store.latitude }}, {{ store.longitude }}
+          </p>
+        {% endif %}
         {% if store.observation %}
           <p class="muted">{{ store.observation }}</p>
         {% endif %}
@@ -20,4 +45,20 @@
       <p class="empty">Nenhum local cadastrado.</p>
     {% endfor %}
   </div>
+
+  <script>
+    const gpsButton = document.getElementById("gps-button");
+    const nearestStoreForm = document.getElementById("nearest-store-form");
+    gpsButton.addEventListener("click", () => {
+      if (!navigator.geolocation) {
+        alert("Seu navegador não suporta GPS.");
+        return;
+      }
+      navigator.geolocation.getCurrentPosition((position) => {
+        document.getElementById("latitude").value = position.coords.latitude;
+        document.getElementById("longitude").value = position.coords.longitude;
+        nearestStoreForm.submit();
+      });
+    });
+  </script>
 {% endblock %}

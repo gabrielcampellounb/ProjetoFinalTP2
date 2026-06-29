@@ -214,7 +214,31 @@ def create_html_blueprint(
     @authenticated_required
     def stores_page():
         """US06/WEB: exibe os locais de compra."""
-        return render_template("stores.html", stores=store_service.list_stores())
+        return render_template(
+            "stores.html",
+            stores=store_service.list_stores(),
+            nearest_store=None,
+            distance_km=None,
+        )
+
+    @blueprint.get("/stores/nearest/view")
+    @authenticated_required
+    def nearest_store_page():
+        """US06/GPS/WEB: exibe a loja mais próxima usando posição do usuário.
+
+        Pré-condição: sessão autenticada e query com latitude e longitude.
+        Pós-condição: renderiza a loja mais próxima calculada pelo serviço.
+        """
+        nearest_store, distance_km = store_service.find_nearest_store(
+            latitude=request.args["latitude"],
+            longitude=request.args["longitude"],
+        )
+        return render_template(
+            "stores.html",
+            stores=store_service.list_stores(),
+            nearest_store=nearest_store,
+            distance_km=distance_km,
+        )
 
     @blueprint.route("/admin/stores/new", methods=["GET", "POST"])
     @admin_required
@@ -225,6 +249,8 @@ def create_html_blueprint(
                 name=request.form["name"],
                 address=request.form["address"],
                 observation=request.form.get("observation"),
+                latitude=_optional_float(request.form.get("latitude")),
+                longitude=_optional_float(request.form.get("longitude")),
             )
             return redirect(url_for("html.stores_page"))
         return render_template("new_store.html")
@@ -328,3 +354,14 @@ def _start_session(user) -> None:
     session.clear()
     session["user_id"] = user.user_id
     session["role"] = user.role
+
+
+def _optional_float(value: str | None) -> float | None:
+    """US06/GPS/WEB: converte campo numérico opcional de formulário.
+
+    Pré-condição: value pode estar vazio ou conter número em texto.
+    Pós-condição: retorna float quando preenchido ou None quando ausente.
+    """
+    if value is None or not value.strip():
+        return None
+    return float(value)

@@ -28,10 +28,13 @@ class SQLiteStoreRepository:
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
                 address TEXT NOT NULL,
-                observation TEXT
+                observation TEXT,
+                latitude REAL,
+                longitude REAL
             );
             """
         )
+        self._ensure_coordinate_columns()
         self.connection.commit()
 
     def add_store(self, store: Store) -> None:
@@ -42,10 +45,16 @@ class SQLiteStoreRepository:
         """
         cursor = self.connection.execute(
             """
-            INSERT INTO stores (name, address, observation)
-            VALUES (?, ?, ?);
+            INSERT INTO stores (name, address, observation, latitude, longitude)
+            VALUES (?, ?, ?, ?, ?);
             """,
-            (store.name, store.address, store.observation),
+            (
+                store.name,
+                store.address,
+                store.observation,
+                store.latitude,
+                store.longitude,
+            ),
         )
         self.connection.commit()
         store.store_id = cursor.lastrowid
@@ -58,7 +67,7 @@ class SQLiteStoreRepository:
         """
         rows = self.connection.execute(
             """
-            SELECT id, name, address, observation
+            SELECT id, name, address, observation, latitude, longitude
             FROM stores
             ORDER BY name COLLATE NOCASE, id;
             """
@@ -69,6 +78,8 @@ class SQLiteStoreRepository:
                 name=row[1],
                 address=row[2],
                 observation=row[3],
+                latitude=row[4],
+                longitude=row[5],
             )
             for row in rows
         ]
@@ -81,7 +92,7 @@ class SQLiteStoreRepository:
         """
         row = self.connection.execute(
             """
-            SELECT id, name, address, observation
+            SELECT id, name, address, observation, latitude, longitude
             FROM stores
             WHERE id = ?;
             """,
@@ -94,4 +105,42 @@ class SQLiteStoreRepository:
             name=row[1],
             address=row[2],
             observation=row[3],
+            latitude=row[4],
+            longitude=row[5],
         )
+
+    def update_store_coordinates(
+        self,
+        store_id: int,
+        latitude: float,
+        longitude: float,
+    ) -> None:
+        """US06/GPS: atualiza as coordenadas de um local existente.
+
+        Pré-condição: store_id deve existir e coordenadas devem ser válidas.
+        Pós-condição: latitude e longitude ficam persistidas no SQLite.
+        """
+        self.connection.execute(
+            """
+            UPDATE stores
+            SET latitude = ?, longitude = ?
+            WHERE id = ?;
+            """,
+            (latitude, longitude, store_id),
+        )
+        self.connection.commit()
+
+    def _ensure_coordinate_columns(self) -> None:
+        """US06/GPS: migra bancos antigos com colunas de coordenadas.
+
+        Pré-condição: a tabela stores deve existir.
+        Pós-condição: latitude e longitude existem na tabela.
+        """
+        columns = {
+            row[1]
+            for row in self.connection.execute("PRAGMA table_info(stores);").fetchall()
+        }
+        if "latitude" not in columns:
+            self.connection.execute("ALTER TABLE stores ADD COLUMN latitude REAL;")
+        if "longitude" not in columns:
+            self.connection.execute("ALTER TABLE stores ADD COLUMN longitude REAL;")

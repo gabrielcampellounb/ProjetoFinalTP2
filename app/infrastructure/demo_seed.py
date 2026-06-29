@@ -46,12 +46,42 @@ DEMO_PRODUCTS = (
 )
 
 DEMO_STORES = (
-    ("Mercado Central", "Rua Principal, 100", "Aberto todos os dias"),
-    ("Supermercado Econômico", "Avenida Brasil, 450", "Estacionamento gratuito"),
-    ("Atacadão Popular", "Rodovia Norte, 1200", "Vendas em atacado e varejo"),
-    ("Empório da Praça", "Praça das Flores, 25", "Produtos artesanais"),
-    ("Mercado do Bairro", "Rua das Acácias, 78", None),
-    ("Hipermercado Avenida", "Avenida Central, 980", "Funcionamento 24 horas"),
+    (
+        "Mercado Central",
+        "Rua Principal, 100",
+        "Aberto todos os dias",
+        -15.793889,
+        -47.882778,
+    ),
+    (
+        "Supermercado Econômico",
+        "Avenida Brasil, 450",
+        "Estacionamento gratuito",
+        -15.799,
+        -47.864,
+    ),
+    (
+        "Atacadão Popular",
+        "Rodovia Norte, 1200",
+        "Vendas em atacado e varejo",
+        -15.747,
+        -47.895,
+    ),
+    (
+        "Empório da Praça",
+        "Praça das Flores, 25",
+        "Produtos artesanais",
+        -15.829,
+        -47.929,
+    ),
+    ("Mercado do Bairro", "Rua das Acácias, 78", None, -15.815, -47.912),
+    (
+        "Hipermercado Avenida",
+        "Avenida Central, 980",
+        "Funcionamento 24 horas",
+        -15.778,
+        -47.93,
+    ),
 )
 
 GENERATED_PRODUCT_COUNT = 3000
@@ -139,19 +169,28 @@ def _seed_users(user_service, user_repository) -> int:
 def _seed_stores(store_service, store_repository) -> int:
     """DEMO: cria somente os locais de compra ausentes."""
     existing = {
-        (store.name.casefold(), store.address.casefold())
+        (store.name.casefold(), store.address.casefold()): store
         for store in store_repository.list_stores()
     }
     created = 0
-    for name, address, observation in DEMO_STORES:
+    for name, address, observation, latitude, longitude in DEMO_STORES:
         key = (name.casefold(), address.casefold())
-        if key not in existing:
+        existing_store = existing.get(key)
+        if existing_store is None:
             store_service.create_store(
                 name=name,
                 address=address,
                 observation=observation,
+                latitude=latitude,
+                longitude=longitude,
             )
             created += 1
+        elif existing_store.latitude is None or existing_store.longitude is None:
+            store_repository.update_store_coordinates(
+                existing_store.store_id,
+                latitude,
+                longitude,
+            )
     return created
 
 
