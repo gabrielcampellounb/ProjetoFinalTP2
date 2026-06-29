@@ -54,6 +54,47 @@ class TestWEBHtmlRoutes(unittest.TestCase):
         self.assertIn('name="email"', html)
         self.assertIn('name="password"', html)
 
+    def test_us01_web_login_page_shows_admin_access(self):
+        """US01/WEB: login deve exibir acesso administrativo de demonstração."""
+        response = self.client.get("/login")
+
+        self.assertEqual(response.status_code, 200)
+        html = response.get_data(as_text=True)
+        self.assertIn("Acesso administrativo", html)
+        self.assertIn("admin@example.com", html)
+        self.assertIn("Entrar como administrador", html)
+
+    def test_us01_web_demo_admin_login_redirects_to_dashboard(self):
+        """US01/WEB: botão admin deve autenticar e abrir painel administrativo."""
+        from werkzeug.security import generate_password_hash
+
+        self.connection.execute(
+            """
+            INSERT INTO users (email, name, password_hash, role)
+            VALUES (?, ?, ?, ?);
+            """,
+            (
+                "admin@example.com",
+                "Administrador",
+                generate_password_hash("admin123"),
+                "admin",
+            ),
+        )
+        self.connection.commit()
+
+        response = self.client.post(
+            "/login",
+            data={
+                "email": "admin@example.com",
+                "password": "admin123",
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response.headers["Location"].endswith("/admin/dashboard"))
+        with self.client.session_transaction() as flask_session:
+            self.assertEqual(flask_session["role"], "admin")
+
     def test_us01_web_login_valid_user_redirects_to_catalog(self):
         """US01/WEB: credenciais válidas devem criar sessão e redirecionar."""
         self.client.post(
