@@ -376,6 +376,41 @@ class TestWEBHtmlRoutes(unittest.TestCase):
         self.assertIn("Sua localização", html)
         self.assertIn("Loja mais próxima", html)
 
+    def test_us06_gps_web_nearest_map_is_limited_and_hides_store_list(self):
+        """US06/GPS/WEB: mapa deve ficar contido e ocultar listagem completa."""
+        self.client.post(
+            "/stores",
+            json={
+                "name": "Mercado Distante",
+                "address": "Taguatinga",
+                "latitude": -15.832,
+                "longitude": -48.057,
+            },
+        )
+        self.client.post(
+            "/stores",
+            json={
+                "name": "Mercado Próximo",
+                "address": "Asa Sul",
+                "latitude": -15.794,
+                "longitude": -47.883,
+            },
+        )
+        with self.client.session_transaction() as flask_session:
+            flask_session["role"] = "user"
+
+        response = self.client.get(
+            "/stores/nearest/view?latitude=-15.793889&longitude=-47.882778"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        html = response.get_data(as_text=True)
+        self.assertIn('class="nearest-store-map"', html)
+        self.assertIn("leaflet.css", html[: html.index("</head>")])
+        self.assertIn("Mercado Próximo", html)
+        self.assertNotIn("Mercado Distante", html)
+        self.assertNotIn("Ver produtos desta loja", html)
+
     def test_web_cart_page(self):
         """WEB: carrinho deve responder 200 e exibir itens da sessão."""
         self.client.post(
