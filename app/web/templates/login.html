@@ -24,5 +24,23 @@
 
     <button type="submit">Entrar</button>
   </form>
+
+  <section class="card" aria-labelledby="admin-access-title">
+    <h2 id="admin-access-title">Acesso administrativo</h2>
+    <p class="muted">
+      Use o administrador de demonstração criado pelo seed local para acessar
+      cadastro de produtos, lojas e métricas.
+    </p>
+    <p>
+      <strong>E-mail:</strong> admin@example.com<br>
+      <strong>Senha:</strong> admin123
+    </p>
+    <form method="post" action="{{ url_for('html.login_page') }}">
+      <input type="hidden" name="email" value="admin@example.com">
+      <input type="hidden" name="password" value="admin123">
+      <button type="submit">Entrar como administrador</button>
+    </form>
+  </section>
+
   <p>Não possui conta? <a href="{{ url_for('html.register_page') }}">Criar conta</a></p>
 {% endblock %}
